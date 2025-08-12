@@ -20,8 +20,8 @@ public class JwtService {
     private final long expirationMillis;
 
     public JwtService(
-            @Value("test-s3cret-ThisIsALongEnoughKey-9fQW1z7Lm2Vx8Rp4Kd5Ng3Ty6Hb0Jc") String secret,
-            @Value("3600000") long expirationMillis) {
+            @Value("${security.jwt.secret}") String secret,
+            @Value("${security.jwt.expiration:3600000}") long expirationMillis) {
         this.secret = secret;
         this.expirationMillis = expirationMillis;
     }
