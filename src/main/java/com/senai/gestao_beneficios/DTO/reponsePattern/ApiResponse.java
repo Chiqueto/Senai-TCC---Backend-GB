@@ -4,6 +4,7 @@ public record ApiResponse<T>(
         boolean success,
         T data,
         ApiError error,
-        ApiMeta meta
+        ApiMeta meta,
+        String message
 ) {
 }

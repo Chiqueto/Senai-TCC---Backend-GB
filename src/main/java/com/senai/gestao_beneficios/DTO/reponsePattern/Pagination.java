@@ -1,12 +1,15 @@
 package com.senai.gestao_beneficios.DTO.reponsePattern;
 
-import java.util.Optional;
 
 public record Pagination(
-        int currentPage,
-        int pageSize,
-        Optional<String> nextPage,
-        Optional<String> previousPage,
-        int total
+        int page,
+        int size,
+        long totalElements,
+        int totalPages,
+        String sort,
+        boolean first,
+        boolean last,
+        boolean hasNext,
+        boolean hasPrevious
 ) {
 }

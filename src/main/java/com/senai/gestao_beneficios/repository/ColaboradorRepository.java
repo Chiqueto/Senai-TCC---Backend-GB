@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface ColaboradorRepository extends JpaRepository<Colaborador, String> {
     Optional<Colaborador> findByMatricula(String matricula);
     boolean existsByMatricula(String matricula);
+    Optional<Colaborador> findById(String id);
 }
