@@ -21,7 +21,6 @@ public class Medico {
     private String id;
     @Column(nullable = false)
     private String nome;
-    @Column(nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "especialidade_id", nullable = false)
     private Especialidade especialidade;

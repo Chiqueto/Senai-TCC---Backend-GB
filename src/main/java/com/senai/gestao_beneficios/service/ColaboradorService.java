@@ -19,7 +19,27 @@ public class ColaboradorService {
         Colaborador colaborador = colaboradorRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("id", "Colaborador não encontrado com o ID: " + id));
 
-        return
 
+        return new ApiResponse<ColaboradorDTO>(
+            true,
+                GetColaboradorDTO(colaborador),
+                null,
+                null,
+                "Colaborador encontrado com sucesso!"
+        );
     }
+
+    private ColaboradorDTO GetColaboradorDTO (Colaborador colaborador){
+        return new ColaboradorDTO(
+                colaborador.getId(),
+                colaborador.getNome(),
+                colaborador.getMatricula(),
+                colaborador.getDtNascimento(),
+                colaborador.getFuncao(),
+                colaborador.getGenero(),
+                colaborador.getCidade(),
+                colaborador.getDependentes()
+        );
+    }
+
 }

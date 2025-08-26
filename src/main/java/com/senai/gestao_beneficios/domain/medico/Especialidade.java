@@ -18,7 +18,11 @@ public class Especialidade {
     private String id;
     @Column(nullable = false)
     private String nome;
-    @OneToMany(mappedBy = "especialidade")
+    @OneToMany(
+            orphanRemoval = true,
+            mappedBy = "especialidade",
+            cascade = CascadeType.ALL
+    )
     private List<Medico> medicos;
 
 }
