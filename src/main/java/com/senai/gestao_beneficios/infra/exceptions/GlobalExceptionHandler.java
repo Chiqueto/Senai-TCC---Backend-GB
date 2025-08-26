@@ -26,9 +26,9 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), ex.getMessage());
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ExceptionHandler(BadRequest.class)
     public ResponseEntity<ApiResponse<Object>> handleNotReadable(HttpMessageNotReadableException ex) {
-        return build(HttpStatus.BAD_REQUEST, "JSON malformado ou tipo inválido.", "Dados inválidos.");
+        return build(HttpStatus.BAD_REQUEST, (!ex.getMessage().isEmpty()) ? ex.getMessage() :   "JSON malformado ou tipo inválido.", "Dados inválidos.");
     }
 
     @ExceptionHandler(ServerException.class)

@@ -1,38 +1,40 @@
-package com.senai.gestao_beneficios.controller.colaborador;
+package com.senai.gestao_beneficios.controller.especialidade;
 
-import com.senai.gestao_beneficios.DTO.colaborador.ColaboradorDTO;
+import com.senai.gestao_beneficios.DTO.especialidade.EspecialidadeDTO;
 import com.senai.gestao_beneficios.DTO.login.LoginResponse;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.infra.exceptions.ServerException;
-import com.senai.gestao_beneficios.service.ColaboradorService;
+import com.senai.gestao_beneficios.service.especialidade.EspecialidadeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/colaborador")
-public class Colaborador {
-    final ColaboradorService colaboradorService;
-    @GetMapping("/{id}")
+@RequestMapping("/especialidade")
+public class Especialidade {
+    final EspecialidadeService especialidadeService;
+
+    @PostMapping("")
     @Operation(
-            summary = "Realiza a busca de um colaborador",
-            description = "Busca todos os dados de um colaborador."
+            summary = "Realiza o cadastro de uma especialidade",
+            description = "Cria uma nova especialidade."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Colaborador recuperado com sucesso!",
+                    responseCode = "201",
+                    description = "Especialidade criada com sucesso!",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ColaboradorDTO.class)
+                            schema = @Schema(implementation = EspecialidadeDTO.class)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -51,14 +53,13 @@ public class Colaborador {
                     content = @Content // Corpo da resposta vazio
             )
     })
-    public ResponseEntity<ApiResponse<ColaboradorDTO>> getColaboradorById(@PathVariable String id ){
+    public ResponseEntity<ApiResponse<EspecialidadeDTO>> criarEspecialidade (String nome){
         try{
-            ApiResponse<ColaboradorDTO> response = colaboradorService.getUserById(id);
-
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            ApiResponse<EspecialidadeDTO> response = especialidadeService.createEspecialidade(nome);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }catch (Exception e){
             throw new ServerException(e.getMessage());
         }
-
     }
+
 }
