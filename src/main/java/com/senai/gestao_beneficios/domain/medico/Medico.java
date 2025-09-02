@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -11,7 +14,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Entity
-@Table(name = "medico")
+@Table(name = "medico", uniqueConstraints = @UniqueConstraint(columnNames = {"email"}))
 @RequiredArgsConstructor
 @Getter
 @Setter
@@ -21,6 +24,8 @@ public class Medico {
     private String id;
     @Column(nullable = false)
     private String nome;
+    @Column(nullable = false)
+    private String email;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "especialidade_id", nullable = false)
     private Especialidade especialidade;
@@ -34,6 +39,8 @@ public class Medico {
     private LocalTime horaVolta;
     @Column(nullable = false)
     private LocalTime horaSaida;
+    @CreatedDate
     private Instant created_at;
+    @LastModifiedDate
     private Instant updated_at;
 }
