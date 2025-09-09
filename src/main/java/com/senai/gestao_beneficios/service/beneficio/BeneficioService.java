@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,6 +36,13 @@ public class BeneficioService {
         BeneficioResponseDTO response = mapper.toDTO(createdBeneficio);
 
         return new ApiResponse<>(true, response, null, null, "Benefício criado com sucesso!");
+    }
+
+    public ApiResponse<List<BeneficioResponseDTO>> buscarBeneficios (){
+        List<Beneficio> beneficios = repository.findAll();
+        List<BeneficioResponseDTO> beneficiosDTO = mapper.toDTOList(beneficios);
+
+        return new ApiResponse<>(true, beneficiosDTO, null, null, "Benefícios encontrados com sucesso!");
     }
 
 }
