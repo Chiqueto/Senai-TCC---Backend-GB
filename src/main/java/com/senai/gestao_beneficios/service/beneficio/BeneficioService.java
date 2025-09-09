@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.service.beneficio;
 
+import com.senai.gestao_beneficios.DTO.beneficio.BeneficioMapper;
 import com.senai.gestao_beneficios.DTO.beneficio.BeneficioRequestDTO;
 import com.senai.gestao_beneficios.DTO.beneficio.BeneficioResponseDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
@@ -9,12 +10,14 @@ import com.senai.gestao_beneficios.repository.BeneficioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class BeneficioService {
     final BeneficioRepository repository;
+    final BeneficioMapper mapper;
 
     public ApiResponse<BeneficioResponseDTO> createBeneficio (BeneficioRequestDTO request){
         Optional<Beneficio> beneficioExist = repository.findByNome(request.nome());
@@ -22,9 +25,16 @@ public class BeneficioService {
             throw new AlreadyExistsException("Benefício com esse nome já existe");
         }
 
+        Beneficio beneficio = new Beneficio();
+        beneficio.setNome(request.nome());
+        beneficio.setDescricao(request.descricao());
+        beneficio.setCreated_at(Instant.now());
 
+        Beneficio createdBeneficio = repository.save(beneficio);
 
-        return null;
+        BeneficioResponseDTO response = mapper.toDTO(createdBeneficio);
+
+        return new ApiResponse<>(true, response, null, null, "Benefício criado com sucesso!");
     }
 
 }
