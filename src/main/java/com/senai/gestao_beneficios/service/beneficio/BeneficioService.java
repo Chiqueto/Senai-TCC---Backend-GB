@@ -22,7 +22,7 @@ public class BeneficioService {
             throw new AlreadyExistsException("Benefício com esse nome já existe");
         }
 
-        Beneficio beneficio =
+
 
         return null;
     }
