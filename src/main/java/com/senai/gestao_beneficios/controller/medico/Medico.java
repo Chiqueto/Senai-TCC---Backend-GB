@@ -12,12 +12,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,17 +50,55 @@ public class Medico {
                     content = @Content // Corpo da resposta vazio
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "Médico já existe.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "500",
                     description = "Erro interno no servidor",
                     content = @Content // Corpo da resposta vazio
             )
     })
     public ResponseEntity<ApiResponse<MedicoResponseDTO>> createMedico (@RequestBody @Valid MedicoRequestDTO medicoRequestDTO){
-        try{
             ApiResponse<MedicoResponseDTO> response = service.createMedico(medicoRequestDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }catch (Exception e){
-            throw new ServerException(e.getMessage());
-        }
     }
+    @GetMapping("")
+    @Operation(
+            summary = "Busca todos os médicos cadastrados",
+            description = "Busca todos os médicos cadastrados."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Médicos buscados com sucesso!",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MedicoResponseDTO[].class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Não autorizado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "Não autenticado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content // Corpo da resposta vazio
+            )
+    })
+    public ResponseEntity<ApiResponse<List<MedicoResponseDTO>>> getAllMedicos (){
+            ApiResponse<List<MedicoResponseDTO>> response = service.getMedicos();
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+
+
+    }
+
 }

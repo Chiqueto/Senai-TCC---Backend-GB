@@ -7,16 +7,16 @@ import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.domain.medico.Disponibilidade;
 import com.senai.gestao_beneficios.domain.medico.Especialidade;
 import com.senai.gestao_beneficios.domain.medico.Medico;
+import com.senai.gestao_beneficios.infra.exceptions.AlreadyExistsException;
 import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
-import com.senai.gestao_beneficios.infra.exceptions.ServerException;
 import com.senai.gestao_beneficios.repository.DisponibilidadeRepository;
 import com.senai.gestao_beneficios.repository.EspecialidadeRepository;
 import com.senai.gestao_beneficios.repository.MedicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ public class MedicoService {
         Optional<Medico> medicoExist = medicoRepository.findByEmail(request.email());
 
         if (medicoExist.isPresent()){
-            return new ApiResponse<>(false, null, "Médico já existe com esse e-mail", null, null);
+            throw new AlreadyExistsException("Médico já existe com esse e-mail");
         }
 
         boolean existeValorInvalido = request.disponibilidade().stream()
@@ -53,6 +53,7 @@ public class MedicoService {
         medico.setHoraPausa(request.horaPausa());
         medico.setHoraVolta(request.horaVolta());
         medico.setHoraSaida(request.horaSaida());
+        medico.setCreated_at(Instant.now());
 
         Medico medicoCriado = medicoRepository.save(medico);
 
@@ -65,5 +66,13 @@ public class MedicoService {
 
         MedicoResponseDTO medicoResponseDTO = medicoMapper.toDTO(medicoCriado);
         return new ApiResponse<MedicoResponseDTO>(true, medicoResponseDTO, null, null, "Médico criado com sucesso!");
+    }
+
+    public ApiResponse<List<MedicoResponseDTO>> getMedicos () {
+        List<Medico> medicos= medicoRepository.findAll();
+
+        List<MedicoResponseDTO> medicosDTO = medicoMapper.toDTOList(medicos);
+
+        return new ApiResponse<>(true, medicosDTO, null, null, "Médicos retornados com sucesso!");
     }
 }

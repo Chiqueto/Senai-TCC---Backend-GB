@@ -52,13 +52,10 @@ public class Colaborador {
             )
     })
     public ResponseEntity<ApiResponse<ColaboradorDTO>> getColaboradorById(@PathVariable String id ){
-        try{
             ApiResponse<ColaboradorDTO> response = colaboradorService.getUserById(id);
 
             return ResponseEntity.status(HttpStatus.OK).body(response);
-        }catch (Exception e){
-            throw new ServerException(e.getMessage());
-        }
+
 
     }
 }

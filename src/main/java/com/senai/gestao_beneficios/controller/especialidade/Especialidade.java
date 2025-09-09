@@ -57,22 +57,16 @@ public class Especialidade {
             )
     })
     public ResponseEntity<ApiResponse<EspecialidadeDTO>> criarEspecialidade (String nome){
-        try{
             ApiResponse<EspecialidadeDTO> response = especialidadeService.createEspecialidade(nome);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }catch (Exception e){
-            throw new ServerException(e.getMessage());
-        }
+
     }
 
     @GetMapping("")
     public ResponseEntity<ApiResponse<List<EspecialidadeDTO>>> buscarEspecialidades(){
-        try{
             ApiResponse<List<EspecialidadeDTO>> response = especialidadeService.buscarEspecialidades();
             return ResponseEntity.status(HttpStatus.OK).body(response);
-        }catch (Exception e){
-            throw new ServerException(e.getMessage());
-        }
+
 
     }
 
