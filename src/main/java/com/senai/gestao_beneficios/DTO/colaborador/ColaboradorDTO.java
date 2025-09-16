@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.DTO.colaborador;
 
+import com.senai.gestao_beneficios.DTO.dependente.DependenteDTO;
 import com.senai.gestao_beneficios.domain.colaborador.Funcao;
 import com.senai.gestao_beneficios.domain.colaborador.Genero;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
@@ -15,6 +16,6 @@ public record ColaboradorDTO (
         Funcao funcao,
         Genero genero,
         String cidade,
-        Set<Dependente> dependentes
+        Set<DependenteDTO> dependentes
 ) {
 }

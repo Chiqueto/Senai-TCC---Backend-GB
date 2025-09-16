@@ -21,11 +21,11 @@ public class Solicitacao {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     public String id;
-    @ManyToMany(mappedBy = "solicitacoes")
+    @ManyToOne
     public Colaborador colaborador;
-    @ManyToMany(mappedBy = "solicitacoes")
+    @ManyToOne
     public Dependente dependente;
-
+    @ManyToOne
     public Beneficio beneficio;
     public BigDecimal valorTotal;
     public BigDecimal desconto;

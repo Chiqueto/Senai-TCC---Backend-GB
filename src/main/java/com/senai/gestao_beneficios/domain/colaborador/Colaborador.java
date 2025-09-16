@@ -47,7 +47,7 @@ public class Colaborador implements UserDetails {
     private Instant created_at;
     private Instant updated_at;
 
-    @OneToMany(orphanRemoval = true, mappedBy = "colaborador", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "colaborador", cascade = CascadeType.ALL)
     private List<Solicitacao> solicitacoes;
 @OneToMany(
         orphanRemoval = true,
