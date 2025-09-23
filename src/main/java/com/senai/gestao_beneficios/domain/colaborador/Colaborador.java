@@ -2,6 +2,7 @@ package com.senai.gestao_beneficios.domain.colaborador;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
+import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -45,6 +46,9 @@ public class Colaborador implements UserDetails {
     private String cidade;
     private Instant created_at;
     private Instant updated_at;
+
+    @OneToMany(mappedBy = "colaborador", cascade = CascadeType.ALL)
+    private List<Solicitacao> solicitacoes;
 @OneToMany(
         orphanRemoval = true,
         mappedBy = "colaborador",

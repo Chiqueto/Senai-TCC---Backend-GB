@@ -1,12 +1,15 @@
 package com.senai.gestao_beneficios.service;
 
 import com.senai.gestao_beneficios.DTO.colaborador.ColaboradorDTO;
+import com.senai.gestao_beneficios.DTO.dependente.DependenteDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
 import com.senai.gestao_beneficios.repository.ColaboradorRepository;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.stream.Collectors;
 
 
 @Service
@@ -38,7 +41,7 @@ public class ColaboradorService {
                 colaborador.getFuncao(),
                 colaborador.getGenero(),
                 colaborador.getCidade(),
-                colaborador.getDependentes()
+                colaborador.getDependentes().stream().map(dependente -> new DependenteDTO(dependente.getId(), dependente.getNome())).collect(Collectors.toSet())
         );
     }
 
