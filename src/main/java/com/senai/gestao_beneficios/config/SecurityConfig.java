@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -22,9 +24,16 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService uds;
     private final PasswordEncoder encoder;
+    private final AuthenticationEntryPoint authenticationEntryPoint;
 
-    public SecurityConfig(JwtAuthFilter f, UserDetailsService uds, PasswordEncoder e) {
-        this.jwtAuthFilter = f; this.uds = uds; this.encoder = e;
+    public SecurityConfig(JwtAuthFilter f,
+                          UserDetailsService uds,
+                          PasswordEncoder e,
+                          @Qualifier("customAuthenticationEntryPoint") AuthenticationEntryPoint authEntryPoint) {
+        this.jwtAuthFilter = f;
+        this.uds = uds;
+        this.encoder = e;
+        this.authenticationEntryPoint = authEntryPoint; // 3. Atribua o valor
     }
 
     @Bean
@@ -52,6 +61,7 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
                 .build();
     }
 }
