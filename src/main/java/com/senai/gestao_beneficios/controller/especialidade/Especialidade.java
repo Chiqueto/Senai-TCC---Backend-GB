@@ -1,6 +1,7 @@
 package com.senai.gestao_beneficios.controller.especialidade;
 
 import com.senai.gestao_beneficios.DTO.especialidade.EspecialidadeDTO;
+import com.senai.gestao_beneficios.DTO.especialidade.EspecialidadeRequestDTO;
 import com.senai.gestao_beneficios.DTO.login.LoginResponse;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.infra.exceptions.ServerException;
@@ -13,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -56,8 +54,8 @@ public class Especialidade {
                     content = @Content // Corpo da resposta vazio
             )
     })
-    public ResponseEntity<ApiResponse<EspecialidadeDTO>> criarEspecialidade (String nome){
-            ApiResponse<EspecialidadeDTO> response = especialidadeService.createEspecialidade(nome);
+    public ResponseEntity<ApiResponse<EspecialidadeDTO>> criarEspecialidade (@RequestBody EspecialidadeRequestDTO request){
+            ApiResponse<EspecialidadeDTO> response = especialidadeService.createEspecialidade(request.nome());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
     }
