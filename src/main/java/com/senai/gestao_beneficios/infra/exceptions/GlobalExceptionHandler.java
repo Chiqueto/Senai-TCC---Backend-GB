@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.infra.exceptions;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,13 +14,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // ✅ ESTES ESTÃO CORRETOS, DESDE QUE VOCÊ LANCE (throw) ESSAS EXCEÇÕES NO SEU CÓDIGO
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleNotFound(NotFoundException ex) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), ex.getMessage());
@@ -30,7 +32,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex.getMessage());
     }
 
-    // ❗️ CORRIGIDO: O parâmetro agora é ForbiddenException
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiResponse<Object>> handleForbidden(ForbiddenException ex) {
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), ex.getMessage());
@@ -51,10 +52,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno", "Ocorreu um erro inesperado.");
     }
 
-    // ❗️ REMOVIDO o seu método handleNotReadable antigo.
-    // O método abaixo é a forma correta.
-
-    // ✅ ESTE JÁ ESTAVA CORRETO
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -67,37 +64,40 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 })
                 .collect(Collectors.joining("; "));
 
-        ApiResponse<Object> apiResponse = new ApiResponse<>(
-                false,
-                null,
-                errosFormatados,
-                null,
-                null
-        );
-
+        ApiResponse<Object> apiResponse = new ApiResponse<>(false, null, errosFormatados, null, null);
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
-    // ✨ NOVO MÉTODO SOBRESCRITO (A FORMA CORRETA DE TRATAR JSON INVÁLIDO)
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 
-        String mensagemAmigavel = "O corpo da requisição está malformado ou contém um tipo de dado inválido.";
+        String mensagemAmigavel;
+        // Verificamos a "causa raiz" da exceção
+        Throwable cause = ex.getRootCause();
 
-        ApiResponse<Object> apiResponse = new ApiResponse<>(
-                false,
-                null,
-                mensagemAmigavel,
-                null,
-                null
-        );
+        // Se for um erro de formato inválido (comum com enums)
+        if (cause instanceof InvalidFormatException ife && ife.getTargetType() != null && ife.getTargetType().isEnum()) {
+            // Lógica para construir a mensagem de erro específica para o enum
+            String invalidValue = ife.getValue().toString();
+            String validValues = Arrays.stream(ife.getTargetType().getEnumConstants())
+                    .map(Object::toString)
+                    .collect(Collectors.joining(", "));
 
+            mensagemAmigavel = String.format(
+                    "Valor inválido '%s'. Os valores aceitos são: [%s].",
+                    invalidValue,
+                    validValues
+            );
+        } else {
+            // Se não for um erro de enum, usamos a mensagem genérica
+            mensagemAmigavel = "O corpo da requisição está malformado ou contém um tipo de dado inválido.";
+        }
+
+        ApiResponse<Object> apiResponse = new ApiResponse<>(false, null, mensagemAmigavel, null, null);
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
-
-    // Método auxiliar para construir a resposta padronizada
     private ResponseEntity<ApiResponse<Object>> build(HttpStatus status, String error, String message) {
         ApiResponse<Object> body = new ApiResponse<>(false, null, error, null, message);
         return ResponseEntity.status(status).body(body);
