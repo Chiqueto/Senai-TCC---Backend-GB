@@ -12,20 +12,22 @@ import com.senai.gestao_beneficios.domain.medico.Especialidade;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.domain.solicitacao.StatusSolicitacao;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
-import com.senai.gestao_beneficios.repository.BeneficioRepository;
-import com.senai.gestao_beneficios.repository.ColaboradorRepository;
-import com.senai.gestao_beneficios.repository.DependenteRepository;
-import com.senai.gestao_beneficios.repository.SolicitacaoRepository;
+import com.senai.gestao_beneficios.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class SolicitacaoService {
     final SolicitacaoRepository repository;
+    final PageSolicitacaoRepository pageRepository;
     final ColaboradorRepository colaboradorRepository;
     final DependenteRepository dependenteRepository;
     final BeneficioRepository beneficioRepository;
@@ -77,6 +79,18 @@ public class SolicitacaoService {
         Solicitacao statusChangedSolicitacao = repository.save(solicitacao);
 
         return new ApiResponse<SolicitacaoResponseDTO>(true, solicitacaoMapper.toDTO(statusChangedSolicitacao), null, null, "Status alterado com sucesso!");
+    }
+
+    public Page<SolicitacaoResponseDTO> buscarTodasAsSolicitacoes(Pageable pageable){
+
+        Page<Solicitacao> solicitacoesPage = pageRepository.findAll(pageable);
+
+        // 2. Mapeia a página de entidades para uma página de DTOs
+        // O método .map() do objeto Page facilita muito essa conversão
+        Page<SolicitacaoResponseDTO> solicitacoesDtoPage = solicitacoesPage
+                .map(solicitacao -> solicitacaoMapper.toDTO(solicitacao)); // Supondo que você tenha um construtor que aceite a entidade
+
+        return solicitacoesDtoPage;
     }
 
 }
