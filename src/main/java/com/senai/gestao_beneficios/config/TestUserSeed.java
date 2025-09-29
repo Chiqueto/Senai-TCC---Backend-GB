@@ -1,14 +1,21 @@
 package com.senai.gestao_beneficios.config;
 
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
+import com.senai.gestao_beneficios.domain.colaborador.Funcao;
+import com.senai.gestao_beneficios.domain.colaborador.Genero;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
 import com.senai.gestao_beneficios.repository.ColaboradorRepository;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 // Remova a linha abaixo se ela existir, pois não é a anotação correta
 // import jakarta.transaction.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional; // ✨ IMPORT CORRETO
+
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -53,5 +60,46 @@ public class TestUserSeed {
         };
     }
 
+ */
+/*
+@Bean
+@Transactional
+ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwordEncoder) {
+    return args -> {
+        // Defina a matrícula para o novo usuário de teste
+        final String novaMatricula = "41532";
+
+        // 1. Verifica se o colaborador já existe
+        Optional<Colaborador> colaboradorExistente = repo.findByMatricula(novaMatricula);
+
+        if (colaboradorExistente.isPresent()) {
+            System.out.println("[SEED] Usuário com matrícula " + novaMatricula + " já existe. Nenhum novo usuário foi criado.");
+        } else {
+            System.out.println("[SEED] Criando um novo usuário de teste com matrícula: " + novaMatricula);
+
+            // 2. Cria a nova instância do Colaborador
+            Colaborador novoColaborador = new Colaborador();
+
+            // 3. Preenche os dados do novo colaborador
+            novoColaborador.setMatricula(novaMatricula);
+            novoColaborador.setNome("Kaiky Botelho");
+            novoColaborador.setMatricula("41532");
+            String senhaPlana = "senha123";
+            String senhaCriptografada = passwordEncoder.encode(senhaPlana);
+            novoColaborador.setSenha(senhaCriptografada); // ✨ Lembre-se de criptografar a senha em um ambiente real!
+            novoColaborador.setDtNascimento(LocalDate.of(2004, 7, 12));
+            novoColaborador.setCidade("Guará");
+            novoColaborador.setFuncao(Funcao.OUTRO);
+            novoColaborador.setGenero(Genero.MASCULINO);
+            novoColaborador.setCreated_at(Instant.now());
+            novoColaborador.setUpdated_at(Instant.now());
+
+            // 4. Salva o novo colaborador no banco de dados
+            repo.save(novoColaborador);
+
+            System.out.println("[SEED] Novo usuário de teste com matrícula " + novaMatricula + " criado com sucesso!");
+        }
+    };
+}
  */
 }

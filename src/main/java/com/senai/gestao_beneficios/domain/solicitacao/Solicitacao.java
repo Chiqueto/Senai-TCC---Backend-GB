@@ -32,6 +32,8 @@ public class Solicitacao {
     public String descricao;
     public Integer qtdeParcelas;
     public Instant dataSolicitacao;
+    @Enumerated(EnumType.STRING)
     public TipoPagamento tipoPagamento;
+    @Enumerated(EnumType.STRING)
     public StatusSolicitacao status;
 }

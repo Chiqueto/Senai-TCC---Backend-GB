@@ -4,6 +4,7 @@ import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoMapper;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoRequestDTO;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
+import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoStatusChangeDTO;
 import com.senai.gestao_beneficios.domain.beneficio.Beneficio;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
@@ -18,6 +19,7 @@ import com.senai.gestao_beneficios.repository.SolicitacaoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -48,6 +50,7 @@ public class SolicitacaoService {
         solicitacao.setColaborador(colaborador);
         solicitacao.setBeneficio(beneficio);
         solicitacao.setDescricao(solicitacao.descricao);
+        solicitacao.setDataSolicitacao(Instant.now());
         solicitacao.setDependente(dependente);
         solicitacao.setDesconto(request.desconto());
         solicitacao.setDescricao(request.descricao());
@@ -63,6 +66,17 @@ public class SolicitacaoService {
 
 
         return new ApiResponse<SolicitacaoResponseDTO>(true, solicitacaoMapper.toDTO(savedSolicitacao), null, null, "Solicitacao criada com sucesso!");
+    }
+
+    public ApiResponse<SolicitacaoResponseDTO> alterarStatus(String idSolicitacao, SolicitacaoStatusChangeDTO dto){
+        Solicitacao solicitacao = repository.findById(idSolicitacao).orElseThrow(
+                () -> new NotFoundException("solicitacao", "Solicitação não encontrada"));
+
+        solicitacao.setStatus(dto.status());
+
+        Solicitacao statusChangedSolicitacao = repository.save(solicitacao);
+
+        return new ApiResponse<SolicitacaoResponseDTO>(true, solicitacaoMapper.toDTO(statusChangedSolicitacao), null, null, "Status alterado com sucesso!");
     }
 
 }
