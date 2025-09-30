@@ -27,6 +27,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), ex.getMessage());
     }
 
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIOException(IOException ex){
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), ex.getMessage());
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Object>> handleUnauthorized(UnauthorizedException ex) {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex.getMessage());
