@@ -6,6 +6,7 @@ import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.service.documento.B2Service;
 import com.senai.gestao_beneficios.service.documento.DocumentoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -44,25 +45,15 @@ public class Documento {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Realiza o upload de um documento",
-            description = "Faz o upload de um arquivo e o associa a uma solicitação.",
-            // Descreve o corpo da requisição multipart para a UI do Swagger
-            requestBody = @RequestBody(
-                    description = "Arquivo e metadados para o upload.",
-                    required = true,
-                    content = @Content(
-                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            // Usa a classe auxiliar para definir os campos do formulário
-                            schema = @Schema(implementation = DocumentoUploadRequestSchema.class)
-                    )
-            )
+            description = "Faz o upload de um arquivo e o associa a uma solicitação existente."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201", // Código HTTP correto para criação de um recurso
+                    responseCode = "201",
                     description = "Documento enviado com sucesso!",
                     content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE, // A resposta é um JSON
-                            schema = @Schema(implementation = ApiResponse.class) // Aponta para sua classe de resposta padrão
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiResponse.class)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -79,9 +70,20 @@ public class Documento {
             )
     })
     public ResponseEntity<ApiResponse<DocumentoResponseDTO>> uploadDocumento(
-            @RequestParam("file") DocumentoRequestDTO documentoRequestDTO
+            @RequestParam("file")
+            @Parameter(description = "O arquivo a ser enviado.",
+                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+            MultipartFile file,
+
+            @RequestParam("solicitacaoId")
+            @Parameter(description = "ID da solicitação à qual o documento pertence.")
+            String solicitacaoId,
+
+            @RequestParam("colaboradorId")
+            @Parameter(description = "ID da solicitação à qual o documento pertence.")
+            String colaboradorId
     ) throws IOException {
-        ApiResponse<DocumentoResponseDTO> response = b2Service.salvarArquivoNoB2(documentoRequestDTO);
+        ApiResponse<DocumentoResponseDTO> response = b2Service.salvarArquivoNoB2(file, solicitacaoId, colaboradorId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

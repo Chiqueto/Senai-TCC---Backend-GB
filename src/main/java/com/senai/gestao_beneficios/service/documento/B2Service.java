@@ -35,16 +35,15 @@ public class B2Service {
     @Value("${b2.bucket-name}")
     private String bucketName;
 
-    public ApiResponse<DocumentoResponseDTO> salvarArquivoNoB2(DocumentoRequestDTO documentoRequestDTO) throws java.io.IOException {
-        MultipartFile file = documentoRequestDTO.file();
+    public ApiResponse<DocumentoResponseDTO> salvarArquivoNoB2(MultipartFile file, String solicitacaoId, String colaboradorId) throws java.io.IOException {
 
         if (file.isEmpty()) {
             throw new IOException("Arquivo vazio ou inválido.");
         }
 
-        Colaborador colaborador = colaboradorRepository.findById(documentoRequestDTO.colaboradorId()).orElseThrow(() -> new NotFoundException("colaborador", "Colaborador não encontrado"));
+        Colaborador colaborador = colaboradorRepository.findById(colaboradorId).orElseThrow(() -> new NotFoundException("colaborador", "Colaborador não encontrado"));
 
-        Solicitacao solicitacao = solicitacaoRepository.findByIdAndColaboradorId(documentoRequestDTO.solicitacaoId(), documentoRequestDTO.colaboradorId()).orElseThrow(() -> new UnauthorizedException("Você não tem acesso para enviar documentos nessa solicitação"));
+        Solicitacao solicitacao = solicitacaoRepository.findByIdAndColaboradorId(solicitacaoId, colaboradorId).orElseThrow(() -> new UnauthorizedException("Você não tem acesso para enviar documentos nessa solicitação"));
 
         String nomeOriginal = file.getOriginalFilename();
         String extensao = nomeOriginal.substring(nomeOriginal.lastIndexOf("."));
