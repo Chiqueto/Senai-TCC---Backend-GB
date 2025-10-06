@@ -20,7 +20,8 @@ public class DocumentoMapper {
                 documento.getNomeArquivoOriginal(),
                 documento.getTamanho(),
                 documento.getDataUpload(),
-                documento.getAssinatura()
+                documento.getAssinatura(),
+                documento.getContentType()
         );
     }
 

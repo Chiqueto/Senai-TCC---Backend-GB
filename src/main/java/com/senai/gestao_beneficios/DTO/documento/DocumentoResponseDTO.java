@@ -8,6 +8,7 @@ public record DocumentoResponseDTO (
         String nomeArquivoOriginal,
         Long tamanho,
         Instant dataUpload,
-        String assinatura
+        String assinatura,
+        String contentType
 ) {
 }

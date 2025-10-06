@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DialectOverride;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.data.annotation.CreatedDate;
 
@@ -22,6 +23,8 @@ public class Beneficio {
     public String nome;
     @Column(nullable = false)
     public String descricao;
+    @Column(nullable = false)
+    public Integer percentualDesconto;
     @CreatedDate
     public Instant created_at;
 }

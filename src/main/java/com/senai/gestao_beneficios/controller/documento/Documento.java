@@ -16,12 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.net.URL;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -80,10 +80,62 @@ public class Documento {
             String solicitacaoId,
 
             @RequestParam("colaboradorId")
-            @Parameter(description = "ID da solicitação à qual o documento pertence.")
+            @Parameter(description = "ID do colaborador à qual a solicitação pertence.")
             String colaboradorId
     ) throws IOException {
         ApiResponse<DocumentoResponseDTO> response = b2Service.salvarArquivoNoB2(file, solicitacaoId, colaboradorId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/{idSolicitacao}")
+    @Operation(
+            summary = "Realiza a busca dos documentos",
+            description = "Faz a busca de todos os documentos referents a uma solicitação existente."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Documento encontrados com sucesso!",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiResponse.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Bad Requeste", content = @Content
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "Não autorizado.", content = @Content
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403", description = "Acesso negado.", content = @Content
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500", description = "Erro interno no servidor", content = @Content
+            )
+    })
+    public ResponseEntity<ApiResponse<List<DocumentoResponseDTO>>>  getDocumentosBySolicitacao (
+            @RequestParam("solicitacaoId")
+            @Parameter(description = "ID da solicitação à qual o documento pertence.")
+            String solicitacaoId,
+            @RequestParam("colabordaorId")
+            @Parameter(description = "ID do colaborador à qual a solicitação pertence.")
+            String colaboradorId
+    ) {
+        ApiResponse<List<DocumentoResponseDTO>> response = documentoService.getAllDocumentsBySolicitacao(solicitacaoId, colaboradorId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/{nomeArquivoUnico}/url-acesso")
+    @Operation(summary = "Gera uma URL de acesso temporária para um documento")
+
+    public ResponseEntity<ApiResponse<URL>> getUrlDeAcesso(@PathVariable String nomeArquivoUnico) {
+
+            ApiResponse<URL> response = b2Service.gerarUrlPresignadaParaLeitura(nomeArquivoUnico);
+
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+
+    }
+
+
 }
