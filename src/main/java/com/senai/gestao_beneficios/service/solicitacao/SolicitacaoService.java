@@ -94,5 +94,17 @@ public class SolicitacaoService {
         return solicitacoesDtoPage;
     }
 
+    public Page<SolicitacaoResponseDTO> buscarSolicitacoesPorColaborador(Pageable pageable, String colaboradorId){
+
+        Page<Solicitacao> solicitacoesPage = pageRepository.findByColaboradorId(colaboradorId, pageable);
+
+        // 2. Mapeia a página de entidades para uma página de DTOs
+        // O método .map() do objeto Page facilita muito essa conversão
+        Page<SolicitacaoResponseDTO> solicitacoesDtoPage = solicitacoesPage
+                .map(solicitacao -> solicitacaoMapper.toDTO(solicitacao)); // Supondo que você tenha um construtor que aceite a entidade
+
+        return solicitacoesDtoPage;
+    }
+
 }
 
