@@ -28,6 +28,7 @@ public class BeneficioService {
 
         Beneficio beneficio = new Beneficio();
         beneficio.setNome(request.nome());
+        beneficio.setPercentualDesconto(request.percentualDesconto());
         beneficio.setDescricao(request.descricao());
         beneficio.setCreated_at(Instant.now());
 
