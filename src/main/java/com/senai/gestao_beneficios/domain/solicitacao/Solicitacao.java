@@ -4,6 +4,7 @@ package com.senai.gestao_beneficios.domain.solicitacao;
 import com.senai.gestao_beneficios.domain.beneficio.Beneficio;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
+import com.senai.gestao_beneficios.domain.documento.Documento;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "solicitacao_beneficio")
@@ -36,4 +38,6 @@ public class Solicitacao {
     public TipoPagamento tipoPagamento;
     @Enumerated(EnumType.STRING)
     public StatusSolicitacao status;
+    @OneToMany(mappedBy = "solicitacao")
+    public List<Documento> documentos;
 }

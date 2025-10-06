@@ -17,7 +17,8 @@ public class BeneficioMapper {
         return new BeneficioResponseDTO(
                 beneficio.getId(),
                 beneficio.getNome(),
-                beneficio.getDescricao()
+                beneficio.getDescricao(),
+                beneficio.getPercentualDesconto()
         );
     }
 

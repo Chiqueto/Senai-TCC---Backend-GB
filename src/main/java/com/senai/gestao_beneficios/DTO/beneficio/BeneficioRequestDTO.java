@@ -7,6 +7,8 @@ public record BeneficioRequestDTO(
         @NotNull
         @NotBlank
         String nome,
-        String descricao
+        String descricao,
+        @NotNull
+        Integer percentualDesconto
 ) {
 }
