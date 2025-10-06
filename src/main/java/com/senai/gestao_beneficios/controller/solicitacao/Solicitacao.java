@@ -78,7 +78,6 @@ public class Solicitacao {
             summary = "Altera o status da solicitação",
             description = "Altera o status da solicitação para aprovado ou negado"
     )
-
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -113,7 +112,6 @@ public class Solicitacao {
             summary = "Altera o status da solicitação",
             description = "Altera o status da solicitação para aprovado ou negado"
     )
-
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -145,6 +143,68 @@ public class Solicitacao {
             @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<SolicitacaoResponseDTO> paginaDeSolicitacoes = service.buscarTodasAsSolicitacoes(pageable);
+
+        Pagination pagination = new Pagination(
+                paginaDeSolicitacoes.getNumber(),           // A página atual
+                paginaDeSolicitacoes.getSize(),             // O tamanho da página
+                paginaDeSolicitacoes.getTotalElements(),    // O total de elementos
+                paginaDeSolicitacoes.getTotalPages(),       // O total de páginas
+                paginaDeSolicitacoes.getSort().toString(),  // Informações de ordenação
+                paginaDeSolicitacoes.isFirst(),             // É a primeira página?
+                paginaDeSolicitacoes.isLast(),              // É a última página?
+                paginaDeSolicitacoes.hasNext(),             // Existe uma próxima página?
+                paginaDeSolicitacoes.hasPrevious()          // Existe uma página anterior?
+        );
+
+        ApiMeta meta = new ApiMeta(pagination);
+
+        ApiResponse<List<SolicitacaoResponseDTO>> response = new ApiResponse<>(
+                true,
+                paginaDeSolicitacoes.getContent(), // Extrai a lista de itens da página
+                null,
+                meta,
+                "Solicitações recuperadas com sucesso."
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @Operation(
+            summary = "Altera o status da solicitação",
+            description = "Altera o status da solicitação para aprovado ou negado"
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Solicitações recuperadas com sucesso!",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = SolicitacaoResponseDTO.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Não autorizado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "Não autenticado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content // Corpo da resposta vazio
+            )
+    })
+    @GetMapping("/{colaboradorId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<SolicitacaoResponseDTO>>> buscarTodasAsSolicitacoesPorColaborador(
+            @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable, @PathVariable String colaboradorId) {
+
+        Page<SolicitacaoResponseDTO> paginaDeSolicitacoes = service.buscarSolicitacoesPorColaborador(pageable, colaboradorId);
 
         Pagination pagination = new Pagination(
                 paginaDeSolicitacoes.getNumber(),           // A página atual
