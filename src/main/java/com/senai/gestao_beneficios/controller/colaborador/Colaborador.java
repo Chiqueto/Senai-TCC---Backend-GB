@@ -14,7 +14,10 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,6 +58,45 @@ public class Colaborador {
             ApiResponse<ColaboradorDTO> response = colaboradorService.getUserById(id);
 
             return ResponseEntity.status(HttpStatus.OK).body(response);
+
+
+    }
+
+    @GetMapping("")
+    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
+    @Operation(
+            summary = "Realiza a busca de todos os colaboradores",
+            description = "Busca todos os dados de todos os colaboradores."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Colaboradores recuperados com sucesso!",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ColaboradorDTO.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Não autorizado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "Não autenticado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content // Corpo da resposta vazio
+            )
+    })
+    public ResponseEntity<ApiResponse<List<ColaboradorDTO>>> getColaboradores(){
+        ApiResponse<List<ColaboradorDTO>> response = colaboradorService.getAllUsers();
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
 
 
     }
