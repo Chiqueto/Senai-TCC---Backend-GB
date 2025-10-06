@@ -33,6 +33,7 @@ public class Solicitacao {
     final SolicitacaoService service;
 
     @PostMapping("")
+    @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Realiza o cadastro de uma solicitação",
             description = "Cria uma nova solicitação."

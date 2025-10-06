@@ -87,7 +87,7 @@ public class Documento {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/{idSolicitacao}")
+    @GetMapping("/{solicitacaoId}/{colaboradorId}")
     @Operation(
             summary = "Realiza a busca dos documentos",
             description = "Faz a busca de todos os documentos referents a uma solicitação existente."
@@ -115,11 +115,11 @@ public class Documento {
             )
     })
     public ResponseEntity<ApiResponse<List<DocumentoResponseDTO>>>  getDocumentosBySolicitacao (
-            @RequestParam("solicitacaoId")
-            @Parameter(description = "ID da solicitação à qual o documento pertence.")
+            @PathVariable("solicitacaoId")
+            @Parameter(description = "ID da solicitação à qual o documento pertence.", required = true)
             String solicitacaoId,
-            @RequestParam("colabordaorId")
-            @Parameter(description = "ID do colaborador à qual a solicitação pertence.")
+            @PathVariable("colaboradorId")
+            @Parameter(description = "ID do colaborador à qual a solicitação pertence.", required = true)
             String colaboradorId
     ) {
         ApiResponse<List<DocumentoResponseDTO>> response = documentoService.getAllDocumentsBySolicitacao(solicitacaoId, colaboradorId);
