@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +55,7 @@ public class SolicitacaoService {
         solicitacao.setDescricao(solicitacao.descricao);
         solicitacao.setDataSolicitacao(Instant.now());
         solicitacao.setDependente(dependente);
-        solicitacao.setDesconto(request.desconto());
+        solicitacao.setDesconto(request.valorTotal().subtract(request.valorTotal().multiply(new BigDecimal(beneficio.percentualDesconto / 100))));
         solicitacao.setDescricao(request.descricao());
         solicitacao.setTipoPagamento(request.tipoPagamento());
         solicitacao.setQtdeParcelas(request.qtdeParcelas());

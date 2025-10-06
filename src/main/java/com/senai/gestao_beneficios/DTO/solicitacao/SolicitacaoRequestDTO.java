@@ -22,7 +22,6 @@ public record SolicitacaoRequestDTO(
         @NotNull(message = "O valor total é obrigatório.")
         BigDecimal valorTotal,
         String idDependente,
-        BigDecimal desconto,
         String descricao,
         Integer qtdeParcelas,
         TipoPagamento tipoPagamento
