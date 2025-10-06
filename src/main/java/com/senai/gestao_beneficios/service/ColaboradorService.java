@@ -9,6 +9,7 @@ import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -32,6 +33,20 @@ public class ColaboradorService {
         );
     }
 
+    public ApiResponse<List<ColaboradorDTO>> getAllUsers(){
+        List<Colaborador> colaboradores = colaboradorRepository.findAll();
+
+        List<ColaboradorDTO> colaboradorDTOs = colaboradores.stream().map(colaborador -> GetColaboradorDTO(colaborador)).toList();
+
+        return new ApiResponse<List<ColaboradorDTO>>(
+                true,
+                colaboradorDTOs,
+                null,
+                null,
+                "Colaboradores encontrados com sucesso!"
+        );
+    }
+
     private ColaboradorDTO GetColaboradorDTO (Colaborador colaborador){
         return new ColaboradorDTO(
                 colaborador.getId(),
@@ -44,5 +59,7 @@ public class ColaboradorService {
                 colaborador.getDependentes().stream().map(dependente -> new DependenteDTO(dependente.getId(), dependente.getNome())).collect(Collectors.toSet())
         );
     }
+
+
 
 }
