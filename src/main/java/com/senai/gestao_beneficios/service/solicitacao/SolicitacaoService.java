@@ -86,8 +86,6 @@ public class SolicitacaoService {
 
         Page<Solicitacao> solicitacoesPage = pageRepository.findAll(pageable);
 
-        // 2. Mapeia a página de entidades para uma página de DTOs
-        // O método .map() do objeto Page facilita muito essa conversão
         Page<SolicitacaoResponseDTO> solicitacoesDtoPage = solicitacoesPage
                 .map(solicitacao -> solicitacaoMapper.toDTO(solicitacao)); // Supondo que você tenha um construtor que aceite a entidade
 
@@ -98,8 +96,6 @@ public class SolicitacaoService {
 
         Page<Solicitacao> solicitacoesPage = pageRepository.findByColaboradorId(colaboradorId, pageable);
 
-        // 2. Mapeia a página de entidades para uma página de DTOs
-        // O método .map() do objeto Page facilita muito essa conversão
         Page<SolicitacaoResponseDTO> solicitacoesDtoPage = solicitacoesPage
                 .map(solicitacao -> solicitacaoMapper.toDTO(solicitacao)); // Supondo que você tenha um construtor que aceite a entidade
 
