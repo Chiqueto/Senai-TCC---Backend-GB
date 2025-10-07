@@ -4,20 +4,25 @@ import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoMapper;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoRequestDTO;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoResponseDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
+import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
 import com.senai.gestao_beneficios.domain.agendamento.Agendamento;
 import com.senai.gestao_beneficios.domain.agendamento.StatusAgendamento;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
 import com.senai.gestao_beneficios.domain.medico.Disponibilidade;
 import com.senai.gestao_beneficios.domain.medico.Medico;
+import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
 import com.senai.gestao_beneficios.infra.exceptions.ConflictException;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
 import com.senai.gestao_beneficios.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,7 @@ public class AgendamentoService {
     final AgendamentoRepository agendamentoRepository;
     final AgendamentoMapper mapper;
     final DisponibilidadeRepository disponibilidadeRepository;
+    final PageAgendamentoRepository pageAgendamentoRepository;
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
     public ApiResponse<AgendamentoResponseDTO> criarAgendamento (AgendamentoRequestDTO requestDTO){
@@ -119,7 +125,23 @@ public class AgendamentoService {
         }
     }
 
+    public ApiResponse<List<AgendamentoResponseDTO>> getAgendamentosByColaborador(String colaboradorId){
+        Colaborador colaborador = colaboradorRepository.findById(colaboradorId).orElseThrow(() -> new NotFoundException("colaborador", "Colaborador não encontrado."));
 
+        List<Agendamento> agendamentos = agendamentoRepository.findByColaboradorId(colaboradorId);
 
+        List<AgendamentoResponseDTO> agendamentoResponseDTOs = mapper.toDTOList(agendamentos);
+
+        return new ApiResponse<List<AgendamentoResponseDTO>>(true, agendamentoResponseDTOs, null, null, "Agendamentos encontrados com sucesso!");
+
+    }
+
+    public Page<AgendamentoResponseDTO> getAllAgendamentos(Pageable pageable){
+        Page<Agendamento> agendamentoPage = pageAgendamentoRepository.findAll(pageable);
+
+        Page<AgendamentoResponseDTO> agendamentoResponseDTOSPage = agendamentoPage.map(agendamento -> mapper.toDTO(agendamento));
+
+        return agendamentoResponseDTOSPage;
+    }
 
 }
