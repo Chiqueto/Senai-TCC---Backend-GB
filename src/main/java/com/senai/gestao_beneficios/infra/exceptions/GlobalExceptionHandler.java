@@ -27,6 +27,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), ex.getMessage());
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConflict(ConflictException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), ex.getMessage());
+    }
+
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ApiResponse<Object>> handleIOException(IOException ex){
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), ex.getMessage());

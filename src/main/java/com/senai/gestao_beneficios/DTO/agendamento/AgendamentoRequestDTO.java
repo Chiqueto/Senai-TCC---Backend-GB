@@ -12,6 +12,6 @@ public record AgendamentoRequestDTO(
         String idMedico,
         String idDependente,
         @NotNull(message = "Horário deve ser informado!")
-        Instant hoario
+        Instant horario
 ) {
 }
