@@ -1,15 +1,18 @@
 package com.senai.gestao_beneficios.service.medico;
 
+import com.senai.gestao_beneficios.DTO.medico.MedicoAvaiabilityDTO;
 import com.senai.gestao_beneficios.DTO.medico.MedicoMapper;
 import com.senai.gestao_beneficios.DTO.medico.MedicoRequestDTO;
 import com.senai.gestao_beneficios.DTO.medico.MedicoResponseDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
+import com.senai.gestao_beneficios.domain.agendamento.Agendamento;
 import com.senai.gestao_beneficios.domain.medico.Disponibilidade;
 import com.senai.gestao_beneficios.domain.medico.Especialidade;
 import com.senai.gestao_beneficios.domain.medico.Medico;
 import com.senai.gestao_beneficios.infra.exceptions.AlreadyExistsException;
 import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
+import com.senai.gestao_beneficios.repository.AgendamentoRepository;
 import com.senai.gestao_beneficios.repository.DisponibilidadeRepository;
 import com.senai.gestao_beneficios.repository.EspecialidadeRepository;
 import com.senai.gestao_beneficios.repository.MedicoRepository;
@@ -17,8 +20,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +36,8 @@ public class MedicoService {
     final MedicoMapper medicoMapper;
     final EspecialidadeRepository especialidadeRepository;
     final DisponibilidadeRepository disponibilidadeRepository;
+    final AgendamentoRepository agendamentoRepository;
+    private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
     public ApiResponse<MedicoResponseDTO> createMedico (MedicoRequestDTO request){
         Optional<Medico> medicoExist = medicoRepository.findByEmail(request.email());
@@ -74,5 +85,43 @@ public class MedicoService {
         List<MedicoResponseDTO> medicosDTO = medicoMapper.toDTOList(medicos);
 
         return new ApiResponse<>(true, medicosDTO, null, null, "Médicos retornados com sucesso!");
+    }
+
+    public ApiResponse<List<MedicoAvaiabilityDTO>> buscarDisponibilidade(String idMedico, LocalDate dia){
+
+        Medico medico = medicoRepository.findById(idMedico).orElseThrow(() -> new NotFoundException("medico", "Médico não encontrado"));
+
+        Instant inicioDoDia = dia.atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
+        Instant fimDoDia = dia.plusDays(1).atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
+
+        List<Agendamento> agendamentosDoDia = agendamentoRepository
+                .findByMedicoIdAndHorarioBetween(idMedico, inicioDoDia, fimDoDia);
+
+        Set<Instant> horariosOcupados = agendamentosDoDia.stream()
+                .map(Agendamento::getHorario)
+                .collect(Collectors.toSet());
+
+        List<MedicoAvaiabilityDTO> disponibilidadeDoDia = new ArrayList<>();
+
+        LocalTime slotAtual = medico.getHoraEntrada();
+        LocalTime fimDoExpediente = medico.getHoraSaida();
+
+        while (slotAtual.isBefore(fimDoExpediente)) {
+
+            Instant slotEmUtc = dia.atTime(slotAtual).atZone(FUSO_HORARIO_NEGOCIO).toInstant();
+
+            boolean ehHorarioAlmoco = !slotAtual.isBefore(medico.getHoraPausa()) &&
+                    slotAtual.isBefore(medico.getHoraVolta());
+
+            boolean estaOcupado = horariosOcupados.contains(slotEmUtc);
+
+            boolean estaDisponivel = !ehHorarioAlmoco && !estaOcupado;
+
+            disponibilidadeDoDia.add(new MedicoAvaiabilityDTO(slotEmUtc, estaDisponivel));
+
+            slotAtual = slotAtual.plusMinutes(30);
+        }
+
+        return new ApiResponse<>(true, disponibilidadeDoDia, null, null, "Disponibilidade do médico recuperada com sucesso.");
     }
 }
