@@ -11,4 +11,6 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, String
     boolean existsByMedicoIdAndHorarioAndStatusNot(String medicoId, Instant horario, StatusAgendamento status);
 
     List<Agendamento> findByMedicoIdAndHorarioBetween(String medicoId, Instant startOfDay, Instant endOfDay);
+
+    List<Agendamento> findByColaboradorId(String colaboradorId);
 }

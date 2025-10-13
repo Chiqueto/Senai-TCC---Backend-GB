@@ -43,4 +43,15 @@ public class MedicoMapper {
         return medicos.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    public MedicoResumeDTO toResumeDTO(Medico medico) {
+        if (medico == null) {
+            return null;
+        }
+
+        return new MedicoResumeDTO(
+                medico.getId(),
+                medico.getNome()
+        );
+    }
+
 }

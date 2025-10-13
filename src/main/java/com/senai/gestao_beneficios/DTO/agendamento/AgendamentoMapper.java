@@ -1,11 +1,13 @@
 package com.senai.gestao_beneficios.DTO.agendamento;
 
 import com.senai.gestao_beneficios.DTO.colaborador.ColaboradorMapper;
+import com.senai.gestao_beneficios.DTO.colaborador.ColaboradorResumeDTO;
 import com.senai.gestao_beneficios.DTO.dependente.DependenteDTO;
 import com.senai.gestao_beneficios.DTO.dependente.DependenteMapper;
 import com.senai.gestao_beneficios.DTO.medico.MedicoMapper;
 import com.senai.gestao_beneficios.DTO.colaborador.ColaboradorDTO;
 import com.senai.gestao_beneficios.DTO.medico.MedicoResponseDTO;
+import com.senai.gestao_beneficios.DTO.medico.MedicoResumeDTO;
 import com.senai.gestao_beneficios.domain.agendamento.Agendamento;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,8 +29,8 @@ public class AgendamentoMapper {
             return null;
         }
 
-        ColaboradorDTO colaboradorDTO = colaboradorMapper.toDTO(agendamento.getColaborador());
-        MedicoResponseDTO medicoDTO = medicoMapper.toDTO(agendamento.getMedico());
+        ColaboradorResumeDTO colaboradorDTO = colaboradorMapper.toResumeDTO(agendamento.getColaborador());
+        MedicoResumeDTO medicoDTO = medicoMapper.toResumeDTO(agendamento.getMedico());
 
         DependenteDTO dependenteDTO = agendamento.getDependente() != null ?
                 dependenteMapper.toDTO(agendamento.getDependente()) : null;

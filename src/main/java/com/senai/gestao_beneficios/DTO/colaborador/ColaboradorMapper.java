@@ -49,4 +49,17 @@ public class ColaboradorMapper {
     public List<ColaboradorDTO> toDTOList(List<Colaborador> colaboradores) {
         return colaboradores.stream().map(this::toDTO).collect(Collectors.toList());
     }
+
+    public ColaboradorResumeDTO toResumeDTO(Colaborador colaborador) {
+        if (colaborador == null) {
+            return null;
+        }
+
+
+
+        return new ColaboradorResumeDTO(
+                colaborador.getId(),
+                colaborador.getNome() // Usa a lista de DTOs convertida
+        );
+    }
 }

@@ -139,7 +139,7 @@ public class Solicitacao {
             )
     })
     @GetMapping("")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
     public ResponseEntity<ApiResponse<List<SolicitacaoResponseDTO>>> buscarTodasAsSolicitacoes(
             @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable) {
 
