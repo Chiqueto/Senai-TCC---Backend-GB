@@ -19,12 +19,15 @@ public class Documento {
     private String id;
     @ManyToOne
     private Solicitacao solicitacao;
-    private String urlArquivo;
     @Column(unique = true)
     private String nomeArquivoUnico;
     private String nomeArquivoOriginal;
     private long tamanho;
     private String contentType;
     private Instant dataUpload;
-    private String assinatura;
+
+    @Enumerated(EnumType.STRING)
+    private TipoDocumento tipo; // Identifica o propósito do documento
+
+    private Instant dataAssinatura;
 }

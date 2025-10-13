@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Recibo de Ciência</title>
+</head>
+<body>
+<div>
+    <h1>RECIBO DE CIÊNCIA E AUTORIZAÇÃO DE DESCONTO</h1>
+    <p>
+        Eu, <b th:text="${colaborador.nome}">[Nome]</b>, matrícula <b th:text="${colaborador.matricula}">[Matrícula]</b>,
+        declaro estar ciente e de acordo com o desconto em folha referente à solicitação do benefício
+        de <b th:text="${solicitacao.beneficio.nome}">[Benefício]</b>, nos seguintes termos:
+    </p>
+    <ul>
+        <li><b>Valor Total:</b> R$ <span th:text="${#numbers.formatDecimal(solicitacao.valorTotal, 1, 'POINT', 2, 'COMMA')}">[Valor Total]</span></li>
+        <li><b>Valor do Desconto Aplicado:</b> R$ <span th:text="${#numbers.formatDecimal(solicitacao.desconto, 1, 'POINT', 2, 'COMMA')}">[Valor do Desconto]</span></li>
+        <li><b>Quantidade de Parcelas:</b> <span th:text="${solicitacao.qtdeParcelas}">[Parcelas]</span></li>
+        <li><b>Valor da Parcela:</b> R$ <span th:text="${#numbers.formatDecimal(valorParcela, 1, 'POINT', 2, 'COMMA')}">[Valor Parcela]</span></li>
+    </ul>
+    <br/><br/>
+    <p>_________________________</p>
+    <p>Assinatura do Colaborador</p>
+</div>
+</body>
+</html>

@@ -11,5 +11,6 @@ public record DocumentoRequestDTO(
         String colaboradorId,
         @NotBlank(message = "Solicitação deve ser informada")
         String solicitacaoId
+
 ) {
 }

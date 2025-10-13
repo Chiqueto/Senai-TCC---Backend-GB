@@ -13,11 +13,15 @@ import com.senai.gestao_beneficios.domain.medico.Especialidade;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.domain.solicitacao.StatusSolicitacao;
 import com.senai.gestao_beneficios.domain.solicitacao.TipoPagamento;
+import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
 import com.senai.gestao_beneficios.repository.*;
+import com.senai.gestao_beneficios.service.documento.DocumentoGenerationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -39,6 +43,7 @@ public class SolicitacaoService {
     final DependenteRepository dependenteRepository;
     final BeneficioRepository beneficioRepository;
     final SolicitacaoMapper solicitacaoMapper;
+    final DocumentoGenerationService documentoGenerationService;
 
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
@@ -160,6 +165,31 @@ public class SolicitacaoService {
         // --- 3. RETORNO DA RESPOSTA ---
         return new ApiResponse<>(true, parcelasAbertas, null, null, "Parcelas abertas recuperadas com sucesso.");
     }
+
+    public ApiResponse<SolicitacaoResponseDTO> aprovarSolicitacao(String idSolicitacao) {
+        Solicitacao solicitacao = repository.findById(idSolicitacao)
+                .orElseThrow(() -> new NotFoundException("solicitacao", "Solicitação não encontrada"));
+
+        // Valida se a solicitação ainda está PENDENTE
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
+            throw new BadRequest("Apenas solicitações pendentes podem ser aprovadas.");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Colaborador gestorLogado = (Colaborador) authentication.getPrincipal();
+        String nomeGestor = gestorLogado.getNome();
+
+        // Chama o serviço para gerar os PDFs e salvá-los
+        documentoGenerationService.gerarDocumentosDeAprovacao(solicitacao, nomeGestor);
+
+        solicitacao.setStatus(StatusSolicitacao.APROVADA); // ou CONCLUIDO, dependendo da sua regra
+
+
+        Solicitacao solicitacaoFinal = repository.save(solicitacao);
+
+        return new ApiResponse<>(true, solicitacaoMapper.toDTO(solicitacaoFinal), null, null, "Solicitação aprovada com sucesso!");
+    }
+
 
 }
 
