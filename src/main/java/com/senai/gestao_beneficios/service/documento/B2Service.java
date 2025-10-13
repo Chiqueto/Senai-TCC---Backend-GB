@@ -11,6 +11,7 @@ import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import com.senai.gestao_beneficios.domain.colaborador.Funcao;
 import com.senai.gestao_beneficios.domain.documento.Documento;
+import com.senai.gestao_beneficios.domain.documento.TipoDocumento;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.infra.exceptions.IOException;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
@@ -23,6 +24,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -66,12 +69,12 @@ public class B2Service {
 
         Documento documento = new Documento();
         documento.setSolicitacao(solicitacao);
-        documento.setUrlArquivo(String.format("https://f005.backblazeb2.com/file/%s/%s", bucketName, nomeUnico));
         documento.setNomeArquivoUnico(nomeUnico);
         documento.setNomeArquivoOriginal(file.getOriginalFilename());
         documento.setTamanho(file.getSize());
         documento.setDataUpload(Instant.now());
         documento.setContentType(file.getContentType());
+        documento.setTipo(TipoDocumento.COMPROVANTE_SOLICITACAO);
 
         Documento documentoFinal = repository.save(documento);
 
@@ -94,5 +97,19 @@ public class B2Service {
 
         return new ApiResponse<URL>(true, url, null, null, "Url gerada com sucesso!");
 
+    }
+
+    public String uploadArquivoGerado(byte[] arquivoBytes, String contentType, String nomeOriginal)  {
+        String extensao = nomeOriginal.substring(nomeOriginal.lastIndexOf("."));
+        String nomeUnico = UUID.randomUUID().toString() + extensao;
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(arquivoBytes.length);
+        metadata.setContentType(contentType);
+
+        InputStream inputStream = new ByteArrayInputStream(arquivoBytes);
+        s3Client.putObject(bucketName, nomeUnico, inputStream, metadata);
+
+        return nomeUnico;
     }
 }

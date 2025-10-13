@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.service.agendamento;
 
+import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoDayChangeDTO;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoMapper;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoRequestDTO;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoResponseDTO;
@@ -143,6 +144,38 @@ public class AgendamentoService {
         Page<AgendamentoResponseDTO> agendamentoResponseDTOSPage = agendamentoPage.map(agendamento -> mapper.toDTO(agendamento));
 
         return agendamentoResponseDTOSPage;
+    }
+
+    public ApiResponse<AgendamentoResponseDTO> updateAgendamentoDate(AgendamentoDayChangeDTO agendamentoDayChangeDTO, String idAgendamento){
+        Agendamento agendamento = agendamentoRepository.findById(idAgendamento).orElseThrow(() -> new NotFoundException("agendamento", "Agendamento não encontrado"));
+
+        LocalDate hoje = LocalDate.now(FUSO_HORARIO_NEGOCIO);
+
+        LocalDate diaDoAgendamento = agendamento.getHorario().atZone(FUSO_HORARIO_NEGOCIO).toLocalDate();
+
+        System.out.println("Horario local: " + hoje);
+
+        System.out.println("Dia do agendamento: " + diaDoAgendamento);
+
+        if (!hoje.isBefore(diaDoAgendamento)) {
+            throw new BadRequest("Você só pode alterar agendamentos com pelo menos 1 dia de antecedência (até a meia-noite do dia anterior).");
+        }
+
+        Instant novoHorario = agendamentoDayChangeDTO.horario();
+        String idMedico = agendamento.getMedico().getId();
+
+        verificarDisponibilidade(idMedico, novoHorario);
+
+
+        agendamento.setHorario(novoHorario);
+
+
+        Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);
+
+
+        AgendamentoResponseDTO responseDTO = mapper.toDTO(agendamentoAtualizado);
+
+        return new ApiResponse<>(true, responseDTO, null, null, "Agendamento reagendado com sucesso!");
     }
 
 }

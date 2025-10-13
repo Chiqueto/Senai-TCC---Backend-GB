@@ -15,13 +15,13 @@ public class DocumentoMapper {
         }
 
         return new DocumentoResponseDTO(
-                documento.getUrlArquivo(),
                 documento.getNomeArquivoUnico(),
                 documento.getNomeArquivoOriginal(),
                 documento.getTamanho(),
                 documento.getDataUpload(),
-                documento.getAssinatura(),
-                documento.getContentType()
+                documento.getContentType(),
+                documento.getTipo(),
+                documento.getDataAssinatura()
         );
     }
 
