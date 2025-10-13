@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.controller.solicitacao;
 
+import com.senai.gestao_beneficios.DTO.colaborador.ParcelaAbertaDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiMeta;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.DTO.reponsePattern.Pagination;
@@ -231,4 +232,47 @@ public class Solicitacao {
 
         return ResponseEntity.ok(response);
     }
+
+
+    @Operation(
+            summary = "Busca parcelas abertas",
+            description = "Busca as parcelas abertas por colaborador"
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Parcelas recuperadas com sucesso!",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ParcelaAbertaDTO.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Não autorizado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "Não autenticado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content // Corpo da resposta vazio
+            )
+    })
+    @GetMapping("/parcelas/{colaboradorId}")
+    public ResponseEntity<ApiResponse<List<ParcelaAbertaDTO>>> buscaParcelasPorColaborador(@PathVariable String colaboradorId) {
+
+        ApiResponse<List<ParcelaAbertaDTO>> response = service.buscarParcelasAbertasPorColaborador(colaboradorId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+
+
+
+
 }
