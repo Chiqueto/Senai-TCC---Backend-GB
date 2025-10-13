@@ -124,4 +124,6 @@ public class MedicoService {
 
         return new ApiResponse<>(true, disponibilidadeDoDia, null, null, "Disponibilidade do médico recuperada com sucesso.");
     }
+
+
 }

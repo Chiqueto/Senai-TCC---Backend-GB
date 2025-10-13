@@ -30,6 +30,7 @@ public class Agendamento {
     @Column(nullable = false)
     private Instant horario;
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private StatusAgendamento status;
     @CreatedDate
     @Column(updatable = false)

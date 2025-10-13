@@ -11,9 +11,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "Minha API",
+                title = "API Gestão de Benefícios",
                 version = "1.0",
-                description = "Documentação da API da minha aplicação."
+                description = "Documentação da API do projeto de gestão de benefícios."
         ),
         // Aplica o requisito de segurança globalmente a todos os endpoints
         security = @SecurityRequirement(name = "bearerAuth")

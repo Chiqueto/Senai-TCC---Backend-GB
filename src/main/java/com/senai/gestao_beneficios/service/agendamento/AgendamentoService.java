@@ -60,6 +60,7 @@ public class AgendamentoService {
 
         AgendamentoResponseDTO response = mapper.toDTO(agendamento);
 
+
         return new ApiResponse<AgendamentoResponseDTO>(true, response, null, null, "Agendamento criado com sucesso!");
     }
 
