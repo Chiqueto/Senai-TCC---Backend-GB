@@ -128,28 +128,19 @@ public class SolicitacaoService {
         List<ParcelaAbertaDTO> parcelasAbertas = new ArrayList<>();
         LocalDate hoje = LocalDate.now(FUSO_HORARIO_NEGOCIO);
 
-        // --- 2. LOOP PARA CALCULAR AS PARCELAS DE CADA SOLICITAÇÃO ---
         for (Solicitacao solicitacao : solicitacoesAprovadas) {
 
-            // Calcula o valor de uma única parcela
             BigDecimal valorParcela = solicitacao.getValorTotal()
                     .divide(new BigDecimal(solicitacao.getQtdeParcelas()), 2, RoundingMode.HALF_UP);
 
-            // Converte a data da solicitação (que está em UTC) para a data local do negócio
             LocalDate dataInicio = solicitacao.getDataSolicitacao().atZone(FUSO_HORARIO_NEGOCIO).toLocalDate();
 
-            // Loop para "gerar" cada parcela virtualmente
             for (int i = 1; i <= solicitacao.getQtdeParcelas(); i++) {
 
-                // Calcula a data de vencimento da parcela atual
-                // Assumindo que a primeira parcela vence 1 mês após a solicitação
                 LocalDate dataVencimento = dataInicio.plusMonths(i).withDayOfMonth(5);
 
-                // --- A LÓGICA PRINCIPAL: VERIFICA SE A PARCELA ESTÁ "ABERTA" ---
-                // Uma parcela está aberta se sua data de vencimento é hoje ou no futuro.
                 if (!dataVencimento.isBefore(hoje)) {
 
-                    // Cria o DTO para a parcela aberta e adiciona à lista de resposta
                     ParcelaAbertaDTO parcelaDTO = new ParcelaAbertaDTO(
                             solicitacao.getId(),
                             solicitacao.getBeneficio().getNome(),
@@ -162,7 +153,6 @@ public class SolicitacaoService {
             }
         }
 
-        // --- 3. RETORNO DA RESPOSTA ---
         return new ApiResponse<>(true, parcelasAbertas, null, null, "Parcelas abertas recuperadas com sucesso.");
     }
 
@@ -170,7 +160,6 @@ public class SolicitacaoService {
         Solicitacao solicitacao = repository.findById(idSolicitacao)
                 .orElseThrow(() -> new NotFoundException("solicitacao", "Solicitação não encontrada"));
 
-        // Valida se a solicitação ainda está PENDENTE
         if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
             throw new BadRequest("Apenas solicitações pendentes podem ser aprovadas.");
         }
@@ -179,10 +168,9 @@ public class SolicitacaoService {
         Colaborador gestorLogado = (Colaborador) authentication.getPrincipal();
         String nomeGestor = gestorLogado.getNome();
 
-        // Chama o serviço para gerar os PDFs e salvá-los
         documentoGenerationService.gerarDocumentosDeAprovacao(solicitacao, nomeGestor);
 
-        solicitacao.setStatus(StatusSolicitacao.APROVADA); // ou CONCLUIDO, dependendo da sua regra
+        solicitacao.setStatus(StatusSolicitacao.APROVADA);
 
 
         Solicitacao solicitacaoFinal = repository.save(solicitacao);
