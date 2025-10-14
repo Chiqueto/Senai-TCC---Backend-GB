@@ -1,148 +1,215 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
-    <meta charset="UTF-8"/>
+    <meta charset="UTF-8" />
     <title>Autorização de Benefício</title>
+
     <style>
-        body {
-            font-family: sans-serif;
-            font-size: 10pt;
-            margin: 0;
-        }
-        .container {
-            border: 2px solid #333;
-            padding: 25px;
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-            min-height: 90vh;
+        :root {
+          --brand: #065F46;
+          --line: #D1D5DB;
+          --muted: #6B7280;
+          --fg: #111827;
         }
 
-        /* --- CABEÇALHO CORRIGIDO --- */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid black;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+        @page {
+          size: A4;
+          margin: 18mm;
         }
-        .header-logo img {
-            width: 80px;
-            flex-shrink: 0; /* Impede que o logo seja espremido */
-        }
-        /* Novo container para agrupar todo o texto da direita */
-        .header-right-content {
-            text-align: right;
-        }
-        /* Ajustes nos elementos internos */
-        .header-company {
-            text-align: right; /* Garante alinhamento à direita */
-            padding-left: 0; /* Remove o padding desnecessário */
-        }
-        .header-company h2 { margin: 0; font-size: 14pt; }
-        .header-info { text-align: right; font-size: 9pt; }
-        .header-info p { margin: 2px 0; }
-        .document-title { font-size: 12pt; font-weight: bold; margin-top: 5px; }
 
-        /* --- O RESTO DO CSS (sem alterações) --- */
-        .data-table {
-            width: 100%;
-            text-align: left;
-            border-collapse: collapse;
-            margin-top: 25px;
-        }
-        .data-table td { padding: 8px; border: 1px solid #ccc; }
-        .data-table .label { font-weight: bold; width: 25%; }
-        .footer {
-            margin-top: 80px;
-            position: relative;
-        }
-        .signature-area {
-            text-align: center;
-        }
-        .observation {
-            font-size: 9pt;
-            text-align: left;
-            margin-top: 30px;
-        }
+        * { box-sizing: border-box; }
+
         @font-face {
-            font-family: 'Dancing Script';
-            src: url('fonts/DancingScript-Regular.ttf');
+          font-family: 'Dancing Script Local';
+          src: url('fonts/DancingScript-Regular.ttf') format('truetype');
+          font-weight: 400;
+          font-style: normal;
         }
-        .signature-font {
-            font-family: 'Dancing Script', cursive;
-            font-size: 24pt;
-            margin-bottom: -5px;
+
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 10pt;
+          color: var(--fg);
+          margin: 0;
+          background: #ffffff;
+          position: relative;
+          min-height: 100vh;
         }
-        .signature-line {
-            width: 300px;
-            border-bottom: 1px solid black;
-            margin: 0 auto 5px auto;
+
+        .container {
+          border: 1px solid #ccc;
+          padding: 25px;
+          width: 100%;
+          background: #fff;
         }
-        .stamp-img {
-            position: absolute;
-            width: 180px;
-            right: 0;
-            bottom: 0;
-            transform: rotate(-10deg);
-            opacity: 0.85;
+
+        /* --- CABEÇALHO --- */
+        header.doc-header {
+          display: table;
+          width: 100%;
+          border-bottom: 2px solid #000;
+          margin-bottom: 24px;
+          padding-bottom: 8px;
+        }
+
+        .brand, .head-right {
+          display: table-cell;
+          vertical-align: top;
+        }
+
+        .brand { width: 80px; }
+        .brand img { width: 80px; height: auto; display: block; }
+
+        .head-right { text-align: right; }
+        .meta { font-size: 9pt; color: var(--muted); }
+        .meta p { margin: 0; }
+
+        .company h2 { margin: 0; font-size: 14pt; line-height: 1.2; }
+        .company p { margin: 2px 0 0 0; font-size: 9.5pt; color: var(--muted); }
+        .doc-title { margin-top: 6px; font-weight: 700; font-size: 12pt; }
+
+        /* --- TABELA DE DADOS --- */
+        table.data {
+          width: 100%;
+          border-collapse: collapse;
+          border: 1px solid var(--line);
+        }
+
+        table.data tr:nth-child(even) { background: #fafafa; }
+
+        table.data td {
+          border: 1px solid var(--line);
+          padding: 6pt 8pt;
+          vertical-align: top;
+        }
+
+        .label {
+          width: 28%;
+          font-weight: 600;
+          color: var(--brand);
+          background: #F0FDF4;
+        }
+
+        /* --- ASSINATURA --- */
+        footer.doc-footer {
+          margin-top: 64px;
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .sign-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+        }
+
+        /* Linha contínua sob o nome */
+        .sign-line {
+          width: 400px;
+          margin: 20px auto 6px;
+          border-bottom: 0.9px solid #000;
+        }
+
+        .sign-name {
+          font-family: 'Dancing Script', cursive;
+          font-size: 30pt;
+          line-height: 1;
+          letter-spacing: 0.2px;
+          font-weight: 400;
+          margin-bottom: -4px;
+          text-rendering: optimizeLegibility;
+          -webkit-font-smoothing: antialiased;
+          transform: rotate(-1.2deg);
+          margin-top: 32px;
+        }
+
+        .sign-legend {
+          font-size: 9.5pt;
+          color: var(--muted);
+          margin-top: 6px;
+        }
+
+        /* --- CARIMBO --- */
+        .stamp {
+          position: fixed;
+          right: 40px;
+          bottom: 490px;
+          width: 180px;
+          transform: rotate(-18deg);
+          opacity: 0.88;
+          z-index: 1;
+          filter: grayscale(0.1) contrast(0.9);
+        }
+
+        @media print {
+          body { background: #fff; }
+          .container { border: none; padding: 0; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <div class="header-logo">
-            <img src="images/logo_gb.png" alt="Logo da Empresa"/>
-        </div>
 
-        <div class="header-right-content">
-            <div class="header-info">
+<div class="container">
+    <!-- CABEÇALHO -->
+    <header class="doc-header">
+        <div class="brand">
+            <img src="images/logo_gb.png" alt="Logo da Empresa" />
+        </div>
+        <div class="head-right">
+            <div class="meta">
                 <p>Página: 1/1</p>
                 <p>Data Emissão: <b th:text="${dataAutorizacao}">14/10/2025</b></p>
-                <p>Hora Emissão: <b th:text="${horaAutorizacao}">08:50</b></p>
+                <p>Hora Emissão: <b th:text="${horaAutorizacao}">15:33</b></p>
             </div>
-            <div class="header-company">
+            <div class="company">
                 <h2>Gestão de Benefícios S/A</h2>
                 <p>GB - Gestão de Benefício</p>
-                <p class="document-title">AUTORIZAÇÃO DE BENEFÍCIO</p>
+                <div class="doc-title">AUTORIZAÇÃO DE BENEFÍCIO</div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <table class="data-table">
-        <tr>
-            <td class="label">Número da Solicitação:</td>
-            <td colspan="3"><b th:text="${solicitacao.id}">...</b></td>
-        </tr>
-        <tr>
-            <td class="label">Nome Colaborador:</td>
-            <td><b th:text="${colaborador.nome}">Usuário de Teste</b></td>
-            <td class="label">Matrícula:</td>
-            <td><b th:text="${colaborador.matricula}">41534</b></td>
-        </tr>
-        <tr>
-            <td class="label">Benefício Autorizado:</td>
-            <td colspan="3"><b th:text="${solicitacao.beneficio.nome}">Teste Benefício</b></td>
-        </tr>
-        <tr>
-            <td class="label">Descrição/Destino:</td>
-            <td colspan="3" th:text="${solicitacao.descricao}">Descrição da solicitação...</td>
-        </tr>
-    </table>
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main>
+        <table class="data">
+            <tr>
+                <td class="label">Número da Solicitação:</td>
+                <td colspan="3"><b th:text="${solicitacao.id}">uuid-de-teste-123456789</b></td>
+            </tr>
+            <tr>
+                <td class="label">Nome Colaborador:</td>
+                <td><b th:text="${colaborador.nome}">Maria Eduarda Santos Pereira</b></td>
+                <td class="label">Matrícula:</td>
+                <td><b th:text="${colaborador.matricula}">41535</b></td>
+            </tr>
+            <tr>
+                <td class="label">Benefício Autorizado:</td>
+                <td colspan="3"><b th:text="${solicitacao.beneficio.nome}">Exemplo de Benefício Autorizado</b></td>
+            </tr>
+            <tr>
+                <td class="label">Descrição/Destino:</td>
+                <td colspan="3" th:text="${solicitacao.descricao}">Viagem para teste de layout do documento.</td>
+            </tr>
+        </table>
+    </main>
 
-    <div class="footer">
-        <div class="signature-area">
-            <p class="signature-font" th:text="${nomeGestor}">Nome do Gestor</p>
-            <div class="signature-line"></div>
-            <p>Assinatura: Depto. Gestão de Benefício</p>
+    <!-- ASSINATURA -->
+    <footer class="doc-footer">
+        <div class="sign-wrap">
+            <div class="sign-name" th:text="${nomeGestor}">Nome do Gestor de Teste</div>
+            <div class="sign-line"></div>
+            <div class="sign-legend">Assinatura: Depto. Gestão de Benefício</div>
         </div>
-        <p class="observation">
-            <b>Obs.:</b> Esta autorização é válida por 30 dias a partir da data de emissão.
-        </p>
-        <img class="stamp-img" src="images/carimbo_virutal.png" alt="Carimbo da Gestão"/>
-    </div>
+    </footer>
 </div>
+
+<!-- CARIMBO -->
+<img class="stamp" src="images/carimbo_virtual.png" alt="Carimbo da Gestão" />
+
 </body>
 </html>

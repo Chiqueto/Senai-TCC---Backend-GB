@@ -1,126 +1,180 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
-    <meta charset="UTF-8"/>
-    <title>Parcelamento de Débito</title>
+    <meta charset="UTF-8" />
+    <title>Recibo de Pagamento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <style>
-        body {
-            font-family: sans-serif;
-            font-size: 10pt;
+        :root {
+          --fg:#111827;
+          --muted:#6B7280;
+          --brand:#065F46;
+          --line:#D1D5DB;
+          --paper:#ffffff;
+          --accent:#111111;
         }
+
+        @page {
+          size: A4;
+          margin: 18mm;
+        }
+
+        * { box-sizing: border-box; }
+        html, body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          background: #f3f4f6;
+          color: var(--fg);
+          font: 10pt/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
+        }
+
+        .sheet {
+          max-width: 210mm;
+          margin: 18mm auto;
+          background: var(--paper);
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          overflow: hidden;
+          box-shadow: 0 6px 30px rgba(0,0,0,.06);
+        }
+
         .container {
-            border: 1px solid #333;
-            padding: 25px;
-            width: 100%;
-            box-sizing: border-box;
+          padding: 22px 24px 28px;
+          position: relative;
+          min-height: 90vh;
         }
-        /* --- CABEÇALHO --- */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
+
+        header.doc-header {
+          display: grid;
+          grid-template-columns: 100px 1fr;
+          gap: 16px;
+          align-items: start;
+          border-bottom: 2px solid var(--accent);
+          padding-bottom: 12px;
+          margin-bottom: 18px;
         }
-        .header img {
-            width: 150px; /* Ajuste o tamanho do seu logo */
+
+        .brand img { width:84px; height:auto; display:block; object-fit:contain; }
+        .head-right { display:grid; gap:6px; justify-items:end; text-align:right; }
+        .company h2 { margin:0; font-size:14pt; line-height:1.15; }
+        .company p { margin:2px 0 0 0; font-size:9.5pt; color:var(--muted); }
+        .doc-title { margin-top:6px; font-weight:700; letter-spacing:.4px; font-size:12pt; }
+
+        .data-table {
+          width:100%;
+          border-collapse:collapse;
+          margin-top:20px;
+          border:1px solid var(--line);
         }
-        .header h2 {
-            font-size: 14pt;
-            margin: 0;
-            text-align: right; /* Alinha o título à direita */
+
+        .data-table tr:nth-child(even){ background:#fafafa; }
+        .data-table td, .data-table th {
+          border:1px solid var(--line);
+          padding:8px 10px;
+          vertical-align:top;
+          text-align:left;
         }
-        /* --- TABELA DE INFORMAÇÕES GERAIS --- */
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            text-align: left;
+
+        .data-table .label {
+          width:28%;
+          font-weight:600;
+          color:var(--brand);
+          background:#F0FDF4;
         }
-        .info-table td {
-            padding: 5px 0;
+
+        /* Fonte local de assinatura */
+        @font-face {
+          font-family:'Dancing Script';
+          src: local('Dancing Script'), url('fonts/DancingScript-Regular.ttf') format('truetype');
+          font-display: swap;
         }
-        .info-table .label {
-            font-weight: bold;
-            width: 120px; /* Largura fixa para os rótulos */
+
+        footer.doc-footer {
+          margin-top:100px;
+          position:relative;
         }
-        /* --- TABELA DE PARCELAS --- */
-        .parcelas-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 9pt;
+
+        .sign-wrap { text-align:center; }
+        .sign-name {
+          font-family: 'Dancing Script', cursive;
+          font-size: 30pt;
+          line-height: 1;
+          letter-spacing: 0.2px;
+          font-weight: 400;
+          margin-bottom: -4px;
+          text-rendering: optimizeLegibility;
+          -webkit-font-smoothing: antialiased;
+          transform: rotate(-1.2deg);
+          margin-top: 32px;
         }
-        .parcelas-table th, .parcelas-table td {
-            border: 1px solid #ccc;
-            padding: 6px;
-            text-align: left;
+
+        .sign-line {
+          width:400px;
+          margin: 80px auto 6px;
+          border-bottom:0.9px solid #000;
         }
-        .parcelas-table th {
-            background-color: #f2f2f2;
-        }
-        /* --- RODAPÉ --- */
-        .footer {
-            margin-top: 60px;
-            text-align: center;
-        }
-        .assinatura-linha {
-            width: 350px;
-            border-bottom: 1px solid black;
-            margin: 0 auto 5px auto;
-        }
-        .autorizacao-final {
-            font-weight: bold;
-            margin-top: 20px;
+
+        .sign-legend { font-size:9.5pt; color:var(--muted); }
+
+        @media print {
+          html, body { background:transparent; }
+          .sheet { margin:0; border:none; box-shadow:none; border-radius:0; max-width:none; }
+          .container { padding:0; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <img src="images/logo_gb.png" alt="Logo da Empresa"/>
-        <h2>PARCELAMENTO DE DÉBITO</h2>
-    </div>
+<div class="sheet">
+    <div class="container">
 
-    <table class="info-table">
-        <tr>
-            <td class="label">Colaborador:</td>
-            <td th:text="${colaborador.matricula} + ' - ' + ${colaborador.nome}">41535 - MARIA EDUARDA SANTOS PEREIRA</td>
-        </tr>
-        <tr>
-            <td class="label">Cargo:</td>
-            <td th:text="${colaborador.funcao.name()}">APRENDIZ EM DESENVOLVIMENTO DE SISTEMAS</td>
-        </tr>
-        <tr>
-            <td class="label">Valor:</td>
-            <td th:text="'R$ ' + ${#numbers.formatDecimal(solicitacao.valorTotal, 1, 'POINT', 2, 'COMMA')}">R$ 338,00</td>
-        </tr>
-        <tr>
-            <td class="label">Data Movim.:</td>
-            <td th:text="${#temporals.format(solicitacao.dataSolicitacao, 'dd/MM/yyyy', 'America/Sao_Paulo')}">03/09/2025</td>
-        </tr>
-    </table>
+        <header class="doc-header">
+            <div class="brand">
+                <img src="images/logo_gb.png" alt="Logo da Empresa" />
+            </div>
+            <div class="head-right">
+                <div class="company">
+                    <h2>Gestão de Benefícios S/A</h2>
+                    <p>GB - Gestão de Benefício</p>
+                    <div class="doc-title">RECIBO DE PAGAMENTO</div>
+                </div>
+            </div>
+        </header>
 
-    <table class="parcelas-table">
-        <thead>
-        <tr>
-            <th>Parcela</th>
-            <th>Data</th>
-            <th>Valor</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="parcela : ${parcelas}">
-            <td th:text="${parcela.numero}">1</td>
-            <td th:text="${parcela.dataVencimento}">30/09/2025</td>
-            <td th:text="'R$ ' + ${parcela.valor}">R$ 84,50</td>
-        </tr>
-        </tbody>
-    </table>
+        <main>
+            <table class="data-table">
+                <tr>
+                    <td class="label">Colaborador:</td>
+                    <td th:text="${colaborador.matricula} + ' - ' + ${colaborador.nome}">41535 - MARIA EDUARDA SANTOS PEREIRA</td>
+                </tr>
+                <tr>
+                    <td class="label">Cargo:</td>
+                    <td th:text="${colaborador.funcao.name()}">APRENDIZ EM DESENVOLVIMENTO DE SISTEMAS</td>
+                </tr>
+                <tr>
+                    <td class="label">Valor Pago:</td>
+                    <td th:text="'R$ ' + ${#numbers.formatDecimal(solicitacao.valorTotal, 1, 'POINT', 2, 'COMMA')}">R$ 338,00</td>
+                </tr>
+                <tr>
+                    <td class="label">Data de Pagamento:</td>
+                    <td th:text="${#temporals.format(solicitacao.dataSolicitacao, 'dd/MM/yyyy', 'America/Sao_Paulo')}">03/09/2025</td>
+                </tr>
+            </table>
 
-    <div class="footer">
-        <div class="assinatura-linha"></div>
-        <p>Assinatura</p>
-        <p class="autorizacao-final">FICA AUTORIZADO O DESCONTO EM FOLHA DE PAGAMENTO</p>
+            <div style="margin-top:18px; text-align:center; font-weight:700;">
+                DECLARO TER RECEBIDO O VALOR ACIMA REFERENTE AO PAGAMENTO INFORMADO
+            </div>
+        </main>
+
+        <footer class="doc-footer">
+            <div class="sign-wrap">
+                <div class="sign-name" th:if="${incluirAssinatura}" th:text="${colaborador.nome}">Assinatura do Colaborador</div>
+                <div class="sign-line"></div>
+                <div class="sign-legend">Assinatura do Colaborador</div>
+            </div>
+        </footer>
+
     </div>
 </div>
 </body>
