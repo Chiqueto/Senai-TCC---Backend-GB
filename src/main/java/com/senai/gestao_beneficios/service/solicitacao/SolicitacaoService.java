@@ -170,7 +170,7 @@ public class SolicitacaoService {
 
         documentoGenerationService.gerarDocumentosDeAprovacao(solicitacao, nomeGestor);
 
-        solicitacao.setStatus(StatusSolicitacao.APROVADA);
+        solicitacao.setStatus(StatusSolicitacao.PENDENTE_ASSINATURA);
 
 
         Solicitacao solicitacaoFinal = repository.save(solicitacao);
