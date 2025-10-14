@@ -2,6 +2,7 @@ package com.senai.gestao_beneficios.service.documento;
 
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.BaseFont;
+import com.senai.gestao_beneficios.DTO.solicitacao.ParcelaInfo;
 import com.senai.gestao_beneficios.domain.documento.Documento;
 import com.senai.gestao_beneficios.domain.documento.TipoDocumento;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
@@ -24,8 +25,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -41,30 +46,51 @@ public class DocumentoGenerationService {
 
     public void gerarDocumentosDeAprovacao(Solicitacao solicitacao, String nomeGestor) {
         try {
-            // Prepara os dados para o template de AUTORIZAÇÃO
             Context authContext = new Context();
             authContext.setVariable("solicitacao", solicitacao);
             authContext.setVariable("colaborador", solicitacao.getColaborador());
             authContext.setVariable("nomeGestor", nomeGestor);
+            ZoneId fusoHorario = ZoneId.of("America/Sao_Paulo");
+
             DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(new Locale("pt", "BR"));
             authContext.setVariable("dataAutorizacao", LocalDate.now().format(formatter));
 
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            authContext.setVariable("horaAutorizacao", ZonedDateTime.now(fusoHorario).format(timeFormatter));
+
+
             gerarESalvarPdf(solicitacao, TipoDocumento.AUTORIZACAO, "autorizacao.html", authContext);
 
-            // Se for Empréstimo, prepara os dados para o RECIBO
             if (solicitacao.getTipoPagamento() == TipoPagamento.DESCONTADO_FOLHA) {
                 Context reciboContext = new Context();
                 reciboContext.setVariable("solicitacao", solicitacao);
                 reciboContext.setVariable("colaborador", solicitacao.getColaborador());
+
+                // Cria a lista de parcelas para o template
+                List<ParcelaInfo> parcelas = new ArrayList<>();
+                LocalDate dataInicio = solicitacao.getDataSolicitacao().atZone(fusoHorario).toLocalDate();
+                DateTimeFormatter parcelasFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
                 BigDecimal valorParcela = solicitacao.getValorTotal()
                         .divide(new BigDecimal(solicitacao.getQtdeParcelas()), 2, RoundingMode.HALF_UP);
-                reciboContext.setVariable("valorParcela", valorParcela);
+                // Formata o valor com vírgula para exibir no PDF
+                String valorParcelaFormatado = String.format(Locale.forLanguageTag("pt-BR"), "%.2f", valorParcela);
 
-                // CORREÇÃO DO BUG: Usando o Enum correto
+                for (int i = 1; i <= solicitacao.getQtdeParcelas(); i++) {
+                    LocalDate dataVencimento = dataInicio.plusMonths(i).withDayOfMonth(5); // Usando a regra do dia 5
+                    parcelas.add(new ParcelaInfo(
+                            String.valueOf(i),
+                            dataVencimento.format(parcelasFormatter),
+                            valorParcelaFormatado
+                    ));
+                }
+                // Envia a lista de parcelas para o template
+                reciboContext.setVariable("parcelas", parcelas);
+
+                // CORREÇÃO DO BUG do Enum
                 gerarESalvarPdf(solicitacao, TipoDocumento.RECIBO, "recibo.html", reciboContext);
             }
         } catch (Exception e) {
-            // Envelopa a exceção para um tratamento padronizado no GlobalExceptionHandler
             throw new ServerException("Falha ao gerar documentos de aprovação: " + e.getMessage());
         }
     }
@@ -76,21 +102,10 @@ public class DocumentoGenerationService {
         try (ByteArrayOutputStream pdfStream = new ByteArrayOutputStream()) {
             ITextRenderer renderer = new ITextRenderer();
 
-            // --- A MUDANÇA MAIS IMPORTANTE ESTÁ AQUI ---
-
-            // 1. Encontra a pasta 'resources' (ou 'classes' depois da compilação).
-            //    Isso nos dará o caminho base para resolver outros arquivos, como as fontes.
-            //    Usamos um arquivo conhecido (application.properties) como ponto de referência.
             String baseUrl = getClass().getClassLoader().getResource("").toString();
 
-            // 2. Passamos o HTML E o baseUrl para o renderizador.
-            //    Agora, quando ele ler `url('fonts/...')` no CSS, ele saberá procurar
-            //    a partir deste diretório base.
-            renderer.setDocumentFromString(html, baseUrl);
 
-            // NÃO PRECISAMOS MAIS DO FONTRESOLVER AQUI, O CSS VAI CUIDAR DE TUDO.
-            // ITextFontResolver fontResolver = renderer.getFontResolver();
-            // fontResolver.addFont(...) // <--- PODE APAGAR ESTA PARTE
+            renderer.setDocumentFromString(html, baseUrl);
 
             renderer.layout();
             renderer.createPDF(pdfStream);

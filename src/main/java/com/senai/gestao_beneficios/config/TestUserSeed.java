@@ -22,12 +22,12 @@ import java.util.Set;
 
 @Configuration
 public class TestUserSeed {
-/*
+    /*
     @Bean
     @Transactional // ✨ ADICIONE OU VERIFIQUE ESTA ANOTAÇÃO
     ApplicationRunner seedUser(ColaboradorRepository repo) { // Removi o PasswordEncoder, pois não é mais usado aqui
         return args -> {
-            final String matricula = "41534";
+            final String matricula = "123";
 
             Optional<Colaborador> colaboradorOpt = repo.findByMatricula(matricula);
 
@@ -59,15 +59,14 @@ public class TestUserSeed {
             System.out.println("[SEED] 2 dependentes foram adicionados com sucesso ao usuário " + matricula);
         };
     }
-
- */
+*/
 /*
 @Bean
 @Transactional
 ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwordEncoder) {
     return args -> {
         // Defina a matrícula para o novo usuário de teste
-        final String novaMatricula = "41532";
+        final String novaMatricula = "123";
 
         // 1. Verifica se o colaborador já existe
         Optional<Colaborador> colaboradorExistente = repo.findByMatricula(novaMatricula);
@@ -82,15 +81,15 @@ ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwo
 
             // 3. Preenche os dados do novo colaborador
             novoColaborador.setMatricula(novaMatricula);
-            novoColaborador.setNome("Kaiky Botelho");
-            novoColaborador.setMatricula("41532");
-            String senhaPlana = "senha123";
+            novoColaborador.setNome("Maria");
+            novoColaborador.setMatricula("123");
+            String senhaPlana = "123";
             String senhaCriptografada = passwordEncoder.encode(senhaPlana);
             novoColaborador.setSenha(senhaCriptografada); // ✨ Lembre-se de criptografar a senha em um ambiente real!
             novoColaborador.setDtNascimento(LocalDate.of(2004, 7, 12));
-            novoColaborador.setCidade("Guará");
+            novoColaborador.setCidade("São Joaquim da Barra");
             novoColaborador.setFuncao(Funcao.OUTRO);
-            novoColaborador.setGenero(Genero.MASCULINO);
+            novoColaborador.setGenero(Genero.FEMININO);
             novoColaborador.setCreated_at(Instant.now());
             novoColaborador.setUpdated_at(Instant.now());
 
@@ -101,5 +100,5 @@ ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwo
         }
     };
 }
- */
+*/
 }
