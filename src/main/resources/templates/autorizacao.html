@@ -5,44 +5,41 @@
     <title>Autorização de Benefício</title>
     <style>
         body { font-family: sans-serif; }
-        .container { border: 1px solid black; padding: 20px; text-align: center; } /* Centralizado */
-        h1 { color: #333; }
+        .container { border: 1px solid black; padding: 20px; text-align: center; }
 
-        /* --- MÁGICA DA FONTE ACONTECE AQUI --- */
+        /* --- RESTAURE ESTA REGRA --- */
         @font-face {
             font-family: 'DancingScript';
-            src: url('fonts/DancingScript-Regular.ttf'); /* Aponta para o arquivo no seu projeto */
+            src: url('fonts/DancingScript-Regular.ttf');
         }
 
         .assinatura {
-            font-family: 'DancingScript', cursive; /* Usa a fonte importada */
-            font-size: 28px; /* Aumenta o tamanho para parecer uma assinatura */
-            margin-bottom: 0; /* Remove a margem de baixo do parágrafo */
+            font-family: 'DancingScript', cursive;
+            font-size: 28px;
+            margin-bottom: 0;
         }
 
         .cargo {
-            margin-top: 0; /* Remove a margem de cima do parágrafo */
-            border-top: 1px solid black; /* Cria a linha de assinatura */
+            margin-top: 0;
+            border-top: 1px solid black;
             padding-top: 5px;
-            display: inline-block; /* Faz a linha ter a largura do texto */
+            display: inline-block;
         }
-
     </style>
 </head>
 <body>
 <div class="container">
     <h1>AUTORIZAÇÃO DE BENEFÍCIO</h1>
     <p>
-        Autorizamos o(a) colaborador(a) <b th:text="${colaborador.nome}">[Nome do Colaborador]</b>,
-        matrícula <b th:text="${colaborador.matricula}">[Matrícula]</b>, a usufruir do benefício
-        de <b th:text="${solicitacao.beneficio.nome}">[Nome do Benefício]</b>.
+        Autorizamos o(a) colaborador(a) <b th:text="${colaborador.nome}">...</b>,
+        matrícula <b th:text="${colaborador.matricula}">...</b>, a usufruir do benefício
+        de <b th:text="${solicitacao.beneficio.nome}">...</b>.
     </p>
-    <p>Solicitação ID: <span th:text="${solicitacao.id}">[ID]</span></p>
-    <p>Data de Emissão: <b th:text="${dataAutorizacao}">[Data de Emissão]</b></p>
+    <p>Solicitação ID: <span th:text="${solicitacao.id}">...</span></p>
+    <p>Data de Emissão: <b th:text="${dataAutorizacao}">...</b></p>
     <br/><br/><br/>
-
     <div class="area-assinatura">
-        <p class="assinatura" th:text="${nomeGestor}">[Nome do Gestor que Aprovou]</p>
+        <p class="assinatura" th:text="${nomeGestor}">...</p>
         <p class="cargo"><b>Gestão de Benefícios</b></p>
     </div>
 </div>

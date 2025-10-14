@@ -5,7 +5,7 @@ import com.senai.gestao_beneficios.domain.documento.TipoDocumento;
 import java.time.Instant;
 
 public record DocumentoResponseDTO (
-        String arquivoUrl,
+        String nomeArquivoUnico,
         String nomeArquivoOriginal,
         Long tamanho,
         Instant dataUpload,
