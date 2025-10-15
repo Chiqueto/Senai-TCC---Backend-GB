@@ -24,6 +24,7 @@ import com.senai.gestao_beneficios.service.documento.DocumentoGenerationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static com.senai.gestao_beneficios.specifications.SolicitacaoSpecification.*;
 
 @Service
 @RequiredArgsConstructor
@@ -101,28 +104,40 @@ public class SolicitacaoService {
         return new ApiResponse<SolicitacaoResponseDTO>(true, solicitacaoMapper.toDTO(statusChangedSolicitacao), null, null, "Status alterado com sucesso!");
     }
 
-    public Page<SolicitacaoResponseDTO> buscarTodasAsSolicitacoes(Pageable pageable){
+    public Page<SolicitacaoResponseDTO> buscarTodasAsSolicitacoes(String colaboradorId,
+                                                                  StatusSolicitacao status,
+                                                                  LocalDate mes,
+                                                                  LocalDate dia,
+                                                                  Pageable pageable){
 
-        Page<Solicitacao> solicitacoesPage = pageRepository.findAll(pageable);
+        Specification<Solicitacao> spec = Specification
+                .allOf(comColaboradorId(colaboradorId))
+                .and(comStatus(status))
+                .and(doMes(mes))
+                .and(comData(dia));
 
-        Page<SolicitacaoResponseDTO> solicitacoesDtoPage = solicitacoesPage
-                .map(solicitacao -> solicitacaoMapper.toDTO(solicitacao)); // Supondo que você tenha um construtor que aceite a entidade
+        Page<Solicitacao> solicitacoesPage = pageRepository.findAll(spec, pageable);
 
-        return solicitacoesDtoPage;
+        return solicitacoesPage.map(solicitacaoMapper::toDTO);
     }
 
-    public Page<SolicitacaoResponseDTO> buscarSolicitacoesPorColaborador(Pageable pageable, String colaboradorId){
+    public Page<SolicitacaoResponseDTO> buscarSolicitacoesPorColaborador(String colaboradorId,
+                                                                         StatusSolicitacao status,
+                                                                         LocalDate mes,
+                                                                         LocalDate dia,
+                                                                         Pageable pageable){
+        Specification<Solicitacao> spec = Specification
+                .allOf(comColaboradorId(colaboradorId))
+                .and(comStatus(status))
+                .and(doMes(mes))
+                .and(comData(dia));
 
-        Page<Solicitacao> solicitacoesPage = pageRepository.findByColaboradorId(colaboradorId, pageable);
+        Page<Solicitacao> solicitacoesPage = pageRepository.findAll(spec, pageable);
 
-        Page<SolicitacaoResponseDTO> solicitacoesDtoPage = solicitacoesPage
-                .map(solicitacao -> solicitacaoMapper.toDTO(solicitacao)); // Supondo que você tenha um construtor que aceite a entidade
-
-        return solicitacoesDtoPage;
+        return solicitacoesPage.map(solicitacaoMapper::toDTO);
     }
 
     public ApiResponse<List<ParcelaAbertaDTO>> buscarParcelasAbertasPorColaborador(String colaboradorId) {
-        System.out.println("Entrou hahahah");
         List<Solicitacao> solicitacoesAprovadas = repository
                 .findByColaboradorIdAndStatusAndTipoPagamento(
                         colaboradorId,
