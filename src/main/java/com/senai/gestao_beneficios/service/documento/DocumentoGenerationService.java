@@ -130,6 +130,51 @@ public class DocumentoGenerationService {
         }
     }
 
+    public void assinarDocumento(Solicitacao solicitacao, String nomeColaborador) {
+        try {
+            Context authContext = new Context();
+            authContext.setVariable("solicitacao", solicitacao);
+            authContext.setVariable("colaborador", solicitacao.getColaborador());
+            authContext.setVariable("nomeGestor", nomeColaborador);
+            ZoneId fusoHorario = ZoneId.of("America/Sao_Paulo");
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(new Locale("pt", "BR"));
+            authContext.setVariable("dataAutorizacao", LocalDate.now().format(formatter));
+
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            authContext.setVariable("horaAutorizacao", ZonedDateTime.now(fusoHorario).format(timeFormatter));
+
+            if (solicitacao.getTipoPagamento() == TipoPagamento.DESCONTADO_FOLHA) {
+                Context reciboContext = new Context();
+                reciboContext.setVariable("solicitacao", solicitacao);
+                reciboContext.setVariable("colaborador", solicitacao.getColaborador());
+
+                List<ParcelaInfo> parcelas = new ArrayList<>();
+                LocalDate dataInicio = solicitacao.getDataSolicitacao().atZone(fusoHorario).toLocalDate();
+                DateTimeFormatter parcelasFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+                BigDecimal valorParcela = solicitacao.getValorTotal()
+                        .divide(new BigDecimal(solicitacao.getQtdeParcelas()), 2, RoundingMode.HALF_UP);
+                String valorParcelaFormatado = String.format(Locale.forLanguageTag("pt-BR"), "%.2f", valorParcela);
+
+                for (int i = 1; i <= solicitacao.getQtdeParcelas(); i++) {
+                    LocalDate dataVencimento = dataInicio.plusMonths(i).withDayOfMonth(5);
+                    parcelas.add(new ParcelaInfo(
+                            String.valueOf(i),
+                            dataVencimento.format(parcelasFormatter),
+                            valorParcelaFormatado
+                    ));
+                }
+
+                reciboContext.setVariable("parcelas", parcelas);
+
+                gerarESalvarPdf(solicitacao, TipoDocumento.RECIBO, "recibo.html", reciboContext, true);
+            }
+        } catch (Exception e) {
+            throw new ServerException("Falha ao assinar documento: " + e.getMessage());
+        }
+    }
+
     private void gerarESalvarPdf(Solicitacao solicitacao, TipoDocumento tipo, String templateNome, Context context, boolean incluirAssinatura)
             throws IOException, DocumentException {
 

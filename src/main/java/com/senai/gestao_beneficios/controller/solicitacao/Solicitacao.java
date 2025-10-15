@@ -142,15 +142,50 @@ public class Solicitacao {
                     content = @Content // Corpo da resposta vazio
             )
     })
-    public ResponseEntity<ApiResponse<SolicitacaoResponseDTO>> aproveSolicitacao (@Parameter(description = "ID da solicitação que terá o status alterado.", required = true, example = "1") @PathVariable String idSolicitacao) {
+    public ResponseEntity<ApiResponse<SolicitacaoResponseDTO>> aprovarSolicitacao (@Parameter(description = "ID da solicitação que terá o status alterado.", required = true, example = "131231-1231-1333") @PathVariable String idSolicitacao) {
         ApiResponse<SolicitacaoResponseDTO> response = service.aprovarSolicitacao(idSolicitacao);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/{idSolicitacao}/assinar")
+    @Operation(
+            summary = "Assinar Recibo da solicitação de benefício",
+            description = "Altera o status da solicitação para aprovado e assina o recibo"
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Recibo assinado com sucesso!",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = SolicitacaoResponseDTO.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Não autorizado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "Não autenticado.",
+                    content = @Content // Corpo da resposta vazio
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content // Corpo da resposta vazio
+            )
+    })
+    public ResponseEntity<ApiResponse<SolicitacaoResponseDTO>> assinarSolicitacao (@Parameter(description = "ID da solicitação que terá o recibo assinado.", required = true, example = "12312-1231-12311") @PathVariable String idSolicitacao) {
+        ApiResponse<SolicitacaoResponseDTO> response = service.assinarSolicitacao(idSolicitacao);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 
     @Operation(
-            summary = "Altera o status da solicitação",
-            description = "Altera o status da solicitação para aprovado ou negado"
+            summary = "Busca todas as solicitações",
+            description = "Busca todas as solicitações cadastradas (paginada)"
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -211,8 +246,8 @@ public class Solicitacao {
 
 
     @Operation(
-            summary = "Altera o status da solicitação",
-            description = "Altera o status da solicitação para aprovado ou negado"
+            summary = "Busca solicitações por colaborador",
+            description = "Busca todas as solicitações de um colaborador"
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
