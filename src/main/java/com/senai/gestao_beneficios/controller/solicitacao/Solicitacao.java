@@ -7,6 +7,7 @@ import com.senai.gestao_beneficios.DTO.reponsePattern.Pagination;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoRequestDTO;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoStatusChangeDTO;
+import com.senai.gestao_beneficios.domain.solicitacao.StatusSolicitacao;
 import com.senai.gestao_beneficios.service.solicitacao.SolicitacaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,12 +20,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -215,20 +218,36 @@ public class Solicitacao {
     @GetMapping("")
     @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
     public ResponseEntity<ApiResponse<List<SolicitacaoResponseDTO>>> buscarTodasAsSolicitacoes(
-            @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(required = false) String colaboradorId,
 
-        Page<SolicitacaoResponseDTO> paginaDeSolicitacoes = service.buscarTodasAsSolicitacoes(pageable);
+            @RequestParam(required = false)
+            StatusSolicitacao status,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) // Espera o formato AAAA-MM-DD
+            @Parameter(description = "Filtra por mês. Envie qualquer dia do mês desejado (ex: 2025-10-01)")
+            LocalDate mes,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) // Garante o formato AAAA-MM-DD
+            @Parameter(description = "Filtra por um dia específico (ex: 2025-10-15)")
+            LocalDate dia,
+
+            @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+
+        Page<SolicitacaoResponseDTO> paginaDeSolicitacoes = service.buscarTodasAsSolicitacoes(colaboradorId, status, mes, dia, pageable);
 
         Pagination pagination = new Pagination(
-                paginaDeSolicitacoes.getNumber(),           // A página atual
-                paginaDeSolicitacoes.getSize(),             // O tamanho da página
-                paginaDeSolicitacoes.getTotalElements(),    // O total de elementos
-                paginaDeSolicitacoes.getTotalPages(),       // O total de páginas
-                paginaDeSolicitacoes.getSort().toString(),  // Informações de ordenação
-                paginaDeSolicitacoes.isFirst(),             // É a primeira página?
-                paginaDeSolicitacoes.isLast(),              // É a última página?
-                paginaDeSolicitacoes.hasNext(),             // Existe uma próxima página?
-                paginaDeSolicitacoes.hasPrevious()          // Existe uma página anterior?
+                paginaDeSolicitacoes.getNumber(),
+                paginaDeSolicitacoes.getSize(),
+                paginaDeSolicitacoes.getTotalElements(),
+                paginaDeSolicitacoes.getTotalPages(),
+                paginaDeSolicitacoes.getSort().toString(),
+                paginaDeSolicitacoes.isFirst(),
+                paginaDeSolicitacoes.isLast(),
+                paginaDeSolicitacoes.hasNext(),
+                paginaDeSolicitacoes.hasPrevious()
         );
 
         ApiMeta meta = new ApiMeta(pagination);
@@ -245,52 +264,41 @@ public class Solicitacao {
     }
 
 
-    @Operation(
-            summary = "Busca solicitações por colaborador",
-            description = "Busca todas as solicitações de um colaborador"
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Solicitações recuperadas com sucesso!",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = SolicitacaoResponseDTO.class)
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "Não autorizado.",
-                    content = @Content // Corpo da resposta vazio
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "403",
-                    description = "Não autenticado.",
-                    content = @Content // Corpo da resposta vazio
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "Erro interno no servidor",
-                    content = @Content // Corpo da resposta vazio
-            )
-    })
-    @GetMapping("/{colaboradorId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<SolicitacaoResponseDTO>>> buscarTodasAsSolicitacoesPorColaborador(
-            @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable, @PathVariable String colaboradorId) {
+    @GetMapping("/colaborador/{colaboradorId}")
+    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS') or #colaboradorId == principal.id")
+    public ResponseEntity<ApiResponse<List<SolicitacaoResponseDTO>>> buscarSolicitacoesPorColaborador(
+            @PathVariable String colaboradorId,
 
-        Page<SolicitacaoResponseDTO> paginaDeSolicitacoes = service.buscarSolicitacoesPorColaborador(pageable, colaboradorId);
+            @RequestParam(required = false)
+            StatusSolicitacao status,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) // Espera o formato AAAA-MM-DD
+            @Parameter(description = "Filtra por mês. Envie qualquer dia do mês desejado (ex: 2025-10-01)")
+            LocalDate mes,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) // Garante o formato AAAA-MM-DD
+            @Parameter(description = "Filtra por um dia específico (ex: 2025-10-15)")
+            LocalDate dia,
+
+            @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        Page<SolicitacaoResponseDTO> paginaDeSolicitacoes = service.buscarSolicitacoesPorColaborador(
+                colaboradorId, status, mes, dia, pageable
+        );
 
         Pagination pagination = new Pagination(
-                paginaDeSolicitacoes.getNumber(),           // A página atual
-                paginaDeSolicitacoes.getSize(),             // O tamanho da página
-                paginaDeSolicitacoes.getTotalElements(),    // O total de elementos
-                paginaDeSolicitacoes.getTotalPages(),       // O total de páginas
-                paginaDeSolicitacoes.getSort().toString(),  // Informações de ordenação
-                paginaDeSolicitacoes.isFirst(),             // É a primeira página?
-                paginaDeSolicitacoes.isLast(),              // É a última página?
-                paginaDeSolicitacoes.hasNext(),             // Existe uma próxima página?
-                paginaDeSolicitacoes.hasPrevious()          // Existe uma página anterior?
+                paginaDeSolicitacoes.getNumber(),
+                paginaDeSolicitacoes.getSize(),
+                paginaDeSolicitacoes.getTotalElements(),
+                paginaDeSolicitacoes.getTotalPages(),
+                paginaDeSolicitacoes.getSort().toString(),
+                paginaDeSolicitacoes.isFirst(),
+                paginaDeSolicitacoes.isLast(),
+                paginaDeSolicitacoes.hasNext(),
+                paginaDeSolicitacoes.hasPrevious()
         );
 
         ApiMeta meta = new ApiMeta(pagination);
