@@ -9,13 +9,17 @@ import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoStatusChangeDTO;
 import com.senai.gestao_beneficios.domain.beneficio.Beneficio;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
+import com.senai.gestao_beneficios.domain.documento.Documento;
+import com.senai.gestao_beneficios.domain.documento.TipoDocumento;
 import com.senai.gestao_beneficios.domain.medico.Especialidade;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.domain.solicitacao.StatusSolicitacao;
 import com.senai.gestao_beneficios.domain.solicitacao.TipoPagamento;
 import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
+import com.senai.gestao_beneficios.infra.exceptions.UnauthorizedException;
 import com.senai.gestao_beneficios.repository.*;
+import com.senai.gestao_beneficios.service.documento.B2Service;
 import com.senai.gestao_beneficios.service.documento.DocumentoGenerationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,6 +48,8 @@ public class SolicitacaoService {
     final BeneficioRepository beneficioRepository;
     final SolicitacaoMapper solicitacaoMapper;
     final DocumentoGenerationService documentoGenerationService;
+    final B2Service b2Service;
+    final DocumentoRepository documentoRepository;
 
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
@@ -170,12 +176,54 @@ public class SolicitacaoService {
 
         documentoGenerationService.gerarDocumentosDeAprovacao(solicitacao, nomeGestor);
 
-        solicitacao.setStatus(StatusSolicitacao.PENDENTE_ASSINATURA);
-
+        if(solicitacao.getTipoPagamento().equals(TipoPagamento.DESCONTADO_FOLHA)){
+            solicitacao.setStatus(StatusSolicitacao.PENDENTE_ASSINATURA);
+        }else{
+            solicitacao.setStatus(StatusSolicitacao.APROVADA);
+        }
 
         Solicitacao solicitacaoFinal = repository.save(solicitacao);
 
         return new ApiResponse<>(true, solicitacaoMapper.toDTO(solicitacaoFinal), null, null, "Solicitação aprovada com sucesso!");
+    }
+
+
+    public ApiResponse<SolicitacaoResponseDTO> assinarSolicitacao(String idSolicitacao) {
+        Solicitacao solicitacao = repository.findById(idSolicitacao)
+                .orElseThrow(() -> new NotFoundException("solicitacao", "Solicitação não encontrada"));
+
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE_ASSINATURA) {
+            throw new BadRequest("Apenas solicitações que estão com assinatura pendente podem ser aprovadas.");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Colaborador userLogado = (Colaborador) authentication.getPrincipal();
+        String nomeColaborador = userLogado.getNome();
+
+        if (!solicitacao.getColaborador().getId().equals(userLogado.getId())) {
+            throw new UnauthorizedException("Você não tem permissão para assinar esta solicitação.");
+        }
+
+        Documento reciboNaoAssinado = solicitacao.getDocumentos().stream()
+                .filter(doc -> doc.getTipo() == TipoDocumento.RECIBO)
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("documento", "Recibo de ciência não encontrado para esta solicitação."));
+
+        String nomeArquivoAntigo = reciboNaoAssinado.getNomeArquivoUnico();
+
+        b2Service.deletarArquivo(nomeArquivoAntigo);
+
+        documentoGenerationService.assinarDocumento(solicitacao, nomeColaborador);
+
+       documentoRepository.delete(reciboNaoAssinado);
+
+        solicitacao.getDocumentos().remove(reciboNaoAssinado);
+
+        solicitacao.setStatus(StatusSolicitacao.APROVADA);
+
+        Solicitacao solicitacaoFinal = repository.save(solicitacao);
+
+        return new ApiResponse<>(true, solicitacaoMapper.toDTO(solicitacaoFinal), null, null, "Solicitação assinada com sucesso!");
     }
 
 

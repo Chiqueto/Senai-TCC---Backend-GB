@@ -59,6 +59,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ServerException.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneric(ServerException ex) {
+        System.out.println(ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno", "Ocorreu um erro inesperado.");
     }
 

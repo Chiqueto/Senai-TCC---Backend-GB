@@ -1,6 +1,7 @@
 package com.senai.gestao_beneficios.service.documento;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.HttpMethod;
@@ -111,5 +112,19 @@ public class B2Service {
         s3Client.putObject(bucketName, nomeUnico, inputStream, metadata);
 
         return nomeUnico;
+    }
+
+    public void deletarArquivo(String nomeArquivoUnico) {
+        try {
+            DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, nomeArquivoUnico);
+
+            // Envia a requisição para o S3 (que se comunica com o B2)
+            s3Client.deleteObject(deleteObjectRequest);
+
+            System.out.println("Arquivo '" + nomeArquivoUnico + "' deletado com sucesso do Backblaze B2.");
+
+        } catch (Exception e) {
+            System.err.println("Falha ao deletar o arquivo '" + nomeArquivoUnico + "' do Backblaze B2: " + e.getMessage());
+        }
     }
 }
