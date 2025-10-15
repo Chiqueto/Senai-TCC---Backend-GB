@@ -1,25 +1,26 @@
 package com.senai.gestao_beneficios.service.agendamento;
 
-import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoDayChangeDTO;
-import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoMapper;
-import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoRequestDTO;
-import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoResponseDTO;
+import com.senai.gestao_beneficios.DTO.agendamento.*;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
 import com.senai.gestao_beneficios.domain.agendamento.Agendamento;
 import com.senai.gestao_beneficios.domain.agendamento.StatusAgendamento;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
+import com.senai.gestao_beneficios.domain.colaborador.Funcao;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
 import com.senai.gestao_beneficios.domain.medico.Disponibilidade;
 import com.senai.gestao_beneficios.domain.medico.Medico;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
 import com.senai.gestao_beneficios.infra.exceptions.ConflictException;
+import com.senai.gestao_beneficios.infra.exceptions.ForbiddenException;
 import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
 import com.senai.gestao_beneficios.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -149,6 +150,13 @@ public class AgendamentoService {
     public ApiResponse<AgendamentoResponseDTO> updateAgendamentoDate(AgendamentoDayChangeDTO agendamentoDayChangeDTO, String idAgendamento){
         Agendamento agendamento = agendamentoRepository.findById(idAgendamento).orElseThrow(() -> new NotFoundException("agendamento", "Agendamento não encontrado"));
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Colaborador colaboradorLogado = (Colaborador) authentication.getPrincipal();
+
+        if(!colaboradorLogado.getId().equals(agendamento.getColaborador().getId()) && colaboradorLogado.getFuncao() != Funcao.GESTAO_BENEFICIOS){
+            throw new ForbiddenException("Você não tem permissão para alterar agendamentos de outros colaboradores!");
+        }
+
         LocalDate hoje = LocalDate.now(FUSO_HORARIO_NEGOCIO);
 
         LocalDate diaDoAgendamento = agendamento.getHorario().atZone(FUSO_HORARIO_NEGOCIO).toLocalDate();
@@ -176,6 +184,18 @@ public class AgendamentoService {
         AgendamentoResponseDTO responseDTO = mapper.toDTO(agendamentoAtualizado);
 
         return new ApiResponse<>(true, responseDTO, null, null, "Agendamento reagendado com sucesso!");
+    }
+
+    public ApiResponse<AgendamentoResponseDTO> changeAgendamentoStatus(AgendamentoStatusChangeDTO agendamentoStatusChangeDTO, String idAgendamento){
+        Agendamento agendamento = agendamentoRepository.findById(idAgendamento).orElseThrow(() -> new NotFoundException("agendamento", "Agendamento não encontrado"));
+
+        agendamento.setStatus(agendamentoStatusChangeDTO.status());
+
+        Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);
+
+        AgendamentoResponseDTO response = mapper.toDTO(agendamentoAtualizado);
+
+        return new ApiResponse<>(true, response, null, null, "Status alterado com sucesso!");
     }
 
 }

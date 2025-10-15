@@ -263,7 +263,6 @@ public class Solicitacao {
         return ResponseEntity.ok(response);
     }
 
-
     @GetMapping("/colaborador/{colaboradorId}")
     @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS') or #colaboradorId == principal.id")
     public ResponseEntity<ApiResponse<List<SolicitacaoResponseDTO>>> buscarSolicitacoesPorColaborador(

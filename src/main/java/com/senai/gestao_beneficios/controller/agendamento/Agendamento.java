@@ -3,6 +3,7 @@ package com.senai.gestao_beneficios.controller.agendamento;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoDayChangeDTO;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoRequestDTO;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoResponseDTO;
+import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoStatusChangeDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiMeta;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.DTO.reponsePattern.Pagination;
@@ -130,7 +131,7 @@ public class Agendamento {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{idAgendamento}")
+    @PatchMapping("/{idAgendamento}/data")
     @Operation(
             summary = "Reagendamento",
             description = "Altera a data de um agendamento."
@@ -159,6 +160,40 @@ public class Agendamento {
     })
     public ResponseEntity<ApiResponse<AgendamentoResponseDTO>> updateAgendamento(@RequestBody @Valid AgendamentoDayChangeDTO request, @PathVariable String idAgendamento){
         ApiResponse<AgendamentoResponseDTO> response = service.updateAgendamentoDate(request, idAgendamento);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PatchMapping("/{idAgendamento}/status")
+    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
+    @Operation(
+            summary = "Alteração de status",
+            description = "Altera o status de um agendamento."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Agendamento alterado com sucesso!",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = AgendamentoResponseDTO.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400", description = "Requisição inválida (ex: dados ausentes)", content = @Content
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401", description = "Não autorizado.", content = @Content
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403", description = "Acesso negado.", content = @Content
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500", description = "Erro interno no servidor", content = @Content
+            )
+    })
+    public ResponseEntity<ApiResponse<AgendamentoResponseDTO>> agendamentoStatusChange(@RequestBody @Valid AgendamentoStatusChangeDTO request, @PathVariable String idAgendamento){
+        ApiResponse<AgendamentoResponseDTO> response = service.changeAgendamentoStatus(request, idAgendamento);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
