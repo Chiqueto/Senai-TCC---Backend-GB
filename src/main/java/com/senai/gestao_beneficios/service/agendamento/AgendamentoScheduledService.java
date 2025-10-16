@@ -19,7 +19,7 @@ public class AgendamentoScheduledService {
     private static final Logger logger = LoggerFactory.getLogger(AgendamentoScheduledService.class);
     private final AgendamentoRepository agendamentoRepository;
 
-    @Scheduled(cron = "0 5 0 * * *") // A mágica acontece aqui
+    @Scheduled(cron = "0 5 0 * * *")
     public void concluirAgendamentosPassados() {
         logger.info("Iniciando tarefa agendada: Concluir Agendamentos Passados...");
 

@@ -57,8 +57,15 @@ public class SolicitacaoService {
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
     public ApiResponse<SolicitacaoResponseDTO> criarSolicitacao(SolicitacaoRequestDTO request){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Colaborador userLogado = (Colaborador) authentication.getPrincipal();
+
         Colaborador colaborador = colaboradorRepository.findById(request.idColaborador()).orElseThrow(
                 () -> new NotFoundException("colaborador", "Colaborador não encontrado"));
+
+        if (!colaborador.getId().equals(userLogado.getId())) {
+            throw new UnauthorizedException("Você não tem permissão para criar agendamentos para outros colaboradores.");
+        }
 
         Beneficio beneficio = beneficioRepository.findById(request.idBeneficio()).orElseThrow(
                 () -> new NotFoundException("beneficio", "Benefício não encontrado"));

@@ -11,10 +11,7 @@ import com.senai.gestao_beneficios.domain.dependente.Dependente;
 import com.senai.gestao_beneficios.domain.medico.Disponibilidade;
 import com.senai.gestao_beneficios.domain.medico.Medico;
 import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
-import com.senai.gestao_beneficios.infra.exceptions.BadRequest;
-import com.senai.gestao_beneficios.infra.exceptions.ConflictException;
-import com.senai.gestao_beneficios.infra.exceptions.ForbiddenException;
-import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
+import com.senai.gestao_beneficios.infra.exceptions.*;
 import com.senai.gestao_beneficios.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,7 +38,14 @@ public class AgendamentoService {
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
     public ApiResponse<AgendamentoResponseDTO> criarAgendamento (AgendamentoRequestDTO requestDTO){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Colaborador userLogado = (Colaborador) authentication.getPrincipal();
+
         Colaborador colaborador = colaboradorRepository.findById(requestDTO.idColaborador()).orElseThrow(() -> new NotFoundException("colaborador", "colaborador não encontrado"));
+
+        if (!colaborador.getId().equals(userLogado.getId())) {
+            throw new UnauthorizedException("Você não tem permissão para criar agendamentos para outros colaboradores.");
+        }
 
         Dependente dependente = null;
         if(requestDTO.idDependente() != null){
