@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.service.medico;
 
+import com.senai.gestao_beneficios.DTO.disponibilidade.DisponibilidadeMapper;
 import com.senai.gestao_beneficios.DTO.medico.MedicoAvaiabilityDTO;
 import com.senai.gestao_beneficios.DTO.medico.MedicoMapper;
 import com.senai.gestao_beneficios.DTO.medico.MedicoRequestDTO;
@@ -19,10 +20,7 @@ import com.senai.gestao_beneficios.repository.MedicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,12 +30,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MedicoService {
-    final MedicoRepository medicoRepository;
-    final MedicoMapper medicoMapper;
-    final EspecialidadeRepository especialidadeRepository;
-    final DisponibilidadeRepository disponibilidadeRepository;
-    final AgendamentoRepository agendamentoRepository;
+    private final MedicoRepository medicoRepository;
+    private final MedicoMapper medicoMapper;
+    private final EspecialidadeRepository especialidadeRepository;
+    private final DisponibilidadeRepository disponibilidadeRepository;
+    private final AgendamentoRepository agendamentoRepository;
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
+    private final DisponibilidadeMapper disponibilidadeMapper;
 
     public ApiResponse<MedicoResponseDTO> createMedico (MedicoRequestDTO request){
         Optional<Medico> medicoExist = medicoRepository.findByEmail(request.email());
@@ -91,6 +90,14 @@ public class MedicoService {
 
         Medico medico = medicoRepository.findById(idMedico).orElseThrow(() -> new NotFoundException("medico", "Médico não encontrado"));
 
+        DayOfWeek diaDaSemana = dia.getDayOfWeek();
+        int diaParaChecar = disponibilidadeMapper.toInteger(diaDaSemana);
+        if(medico.getDisponibilidade().contains(disponibilidadeMapper.toInteger(diaDaSemana))){
+            throw new BadRequest("Médico não atende nesse dia da semana!");
+        }
+        boolean medicoTrabalhaNoDia = medico.getDisponibilidade().stream()
+                .anyMatch(disponibilidade -> disponibilidade.getDiaSemana() == diaParaChecar);
+
         Instant inicioDoDia = dia.atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
         Instant fimDoDia = dia.plusDays(1).atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
 
@@ -115,7 +122,7 @@ public class MedicoService {
 
             boolean estaOcupado = horariosOcupados.contains(slotEmUtc);
 
-            boolean estaDisponivel = !ehHorarioAlmoco && !estaOcupado;
+            boolean estaDisponivel = !ehHorarioAlmoco && !estaOcupado && !medicoTrabalhaNoDia;
 
             disponibilidadeDoDia.add(new MedicoAvaiabilityDTO(slotEmUtc, estaDisponivel));
 
