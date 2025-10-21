@@ -9,19 +9,24 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoRequestDTO;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoResponseDTO;
 import com.senai.gestao_beneficios.DTO.chat.ChatRequestDTO;
 import com.senai.gestao_beneficios.DTO.chat.ChatResponseDTO;
+import com.senai.gestao_beneficios.DTO.colaborador.ColaboradorDTO;
+import com.senai.gestao_beneficios.DTO.dependente.DependenteDTO;
 import com.senai.gestao_beneficios.DTO.medico.MedicoAvaiabilityDTO;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoRequestDTO;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
 import com.senai.gestao_beneficios.domain.solicitacao.TipoPagamento;
+import com.senai.gestao_beneficios.infra.exceptions.NotFoundException;
 import com.senai.gestao_beneficios.repository.ColaboradorRepository;
+import com.senai.gestao_beneficios.service.ColaboradorService;
 import com.senai.gestao_beneficios.service.agendamento.AgendamentoService;
 import com.senai.gestao_beneficios.service.beneficio.BeneficioService;
 import com.senai.gestao_beneficios.service.medico.MedicoService;
@@ -49,6 +54,7 @@ public class ChatService {
     private final MedicoService medicoService;
     private final AgendamentoService agendamentoService;
     private final SolicitacaoService solicitacaoService;
+    private final ColaboradorService colaboradorService;
     private final ChatHistoryService historyService;
     private final ColaboradorRepository colaboradorRepository;
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
@@ -62,7 +68,7 @@ public class ChatService {
     private record ChatCompletionResponse(List<Choice> choices) {}
 
     private record HorariosArgs(String idMedico, LocalDate dia) {}
-    private record AgendamentoArgs(String idMedico, Instant horario, String idDependente) {}
+    private record AgendamentoArgs(String idMedico, Instant horario, String idDependente, String nomeDependente) {}
     private record SolicitacaoArgs(
             String idBeneficio,
             String valorTotal,
@@ -174,8 +180,18 @@ public class ChatService {
                 System.out.println(apiResponse);
                 return objectMapper.writeValueAsString(apiResponse.data());
 
+            case "buscar_dependentes_do_colaborador":
+                ApiResponse<ColaboradorDTO> response = colaboradorService.getUserById(colaboradorLogado.getId());
+                return objectMapper.writeValueAsString(response.data().dependentes());
+
             case "criar_agendamento":
                 AgendamentoArgs agendamentoArgs = objectMapper.readValue(arguments, AgendamentoArgs.class);
+
+                String idDependenteAgendamento = null;
+                if (agendamentoArgs.nomeDependente() != null && !agendamentoArgs.nomeDependente().isBlank()) {
+                    // Usa a mesma lógica do 'case' acima para encontrar o ID do dependente pelo nome
+                    idDependenteAgendamento = findDependenteIdByName(colaboradorLogado.getId(), agendamentoArgs.nomeDependente());
+                }
 
                 AgendamentoRequestDTO agendamentoDTO = new AgendamentoRequestDTO(
                         colaboradorLogado.getId(),
@@ -256,7 +272,14 @@ public class ChatService {
                                 )
                         )
                 ),
-
+                Map.of(
+                        "type", "function",
+                        "function", Map.of(
+                                "name", "buscar_dependentes_do_colaborador",
+                                "description", "Retorna a lista de dependentes (com nome e ID) associados ao colaborador que está conversando.",
+                                "parameters", Map.of("type", "object", "properties", Map.of()) // Não precisa de parâmetros
+                        )
+                ),
                 // Ferramenta 4: criar_agendamento (NOVA)
                 Map.of(
                         "type", "function",
@@ -267,15 +290,15 @@ public class ChatService {
                                         "type", "object",
                                         "properties", Map.of(
                                                 "idMedico", Map.of("type", "string", "description", "O ID do médico escolhido."),
-                                                "horario", Map.of("type", "string", "description", "O horário exato escolhido, em formato UTC ISO 8601 (ex: '2025-10-16T18:30:00Z')."),
-                                                "idDependente", Map.of("type", "string", "description", "O ID do dependente, se a consulta não for para o próprio colaborador.")
+                                                "horario", Map.of("type", "string", "description", "O horário exato escolhido, em formato UTC ISO 8601."),
+                                                // --- PARÂMETRO ALTERADO ---
+                                                "nomeDependente", Map.of("type", "string", "description", "O NOME do dependente, se a consulta não for para o próprio colaborador.")
                                         ),
-                                        "required", List.of("idMedico", "horario") // idDependente é opcional
+                                        "required", List.of("idMedico", "horario")
                                 )
                         )
                 ),
 
-                // Ferramenta 5: criar_solicitacao_beneficio (NOVA E COMPLETA)
                 Map.of(
                         "type", "function",
                         "function", Map.of(
@@ -284,16 +307,17 @@ public class ChatService {
                                 "parameters", Map.of(
                                         "type", "object",
                                         "properties", Map.of(
-                                                "idBeneficio", Map.of("type", "string", "description", "O ID do benefício que o colaborador escolheu."),
+                                                "idBeneficio", Map.of("type", "string", "description", "O ID do benefício escolhido."),
                                                 "valorTotal", Map.of("type", "string", "description", "O valor monetário total do benefício solicitado."),
                                                 "tipoPagamento", Map.of(
                                                         "type", "string",
                                                         "description", "A forma de pagamento escolhida.",
-                                                        "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_FOLHA") // Ajuda a IA a saber as opções
+                                                        "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_EM_FOLHA")
                                                 ),
-                                                "qtdeParcelas", Map.of("type", "string", "description", "A quantidade de parcelas. Obrigatório apenas se tipoPagamento for DESCONTADO_FOLHA."),
-                                                "idDependente", Map.of("type", "string", "description", "O ID do dependente, se o benefício for para um."),
-                                                "descricao", Map.of("type", "string", "description", "Um texto com observações ou justificativas do colaborador.")
+                                                "qtdeParcelas", Map.of("type", "string", "description", "A quantidade de parcelas."),
+                                                // --- PARÂMETRO ALTERADO ---
+                                                "nomeDependente", Map.of("type", "string", "description", "O NOME do dependente, se o benefício for para um."),
+                                                "descricao", Map.of("type", "string", "description", "Um texto com observações ou justificativas.")
                                         ),
                                         "required", List.of("idBeneficio", "valorTotal", "tipoPagamento")
                                 )
@@ -371,4 +395,14 @@ public class ChatService {
                 "4.  **Se não souber:** Se a pergunta do usuário fugir do escopo de agendamentos ou benefícios, ou se você não tiver uma ferramenta para ajudar, direcione-o para o canal oficial: \"Para este assunto, por favor, entre em contato diretamente com o RH.\n"+
                 "5.  **AJA PRIMEIRO, FALE DEPOIS:** Se a mensagem do usuário for uma pergunta direta que pode ser respondida imediatamente por uma ferramenta sem parâmetros (como `listar_beneficios` ou `listar_medicos`), sua primeira ação deve ser chamar a ferramenta. Não responda com texto de confirmação como \"Vou buscar para você\". Chame a ferramenta, receba o resultado, e só então formule a resposta em texto para o usuário já contendo a informação solicitada.";
     }
+
+    private String findDependenteIdByName(String colaboradorId, String nomeDependente) throws JsonProcessingException {
+        ApiResponse<ColaboradorDTO> response = colaboradorService.getUserById(colaboradorId);
+        return response.data().dependentes().stream()
+                .filter(d -> d.nome().equalsIgnoreCase(nomeDependente))
+                .findFirst()
+                .map(DependenteDTO::id)
+                .orElseThrow(() -> new NotFoundException("dependente", "Dependente com o nome '" + nomeDependente + "' não encontrado."));
+    }
+
 }
