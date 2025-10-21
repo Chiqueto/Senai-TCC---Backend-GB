@@ -11,7 +11,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Aplica a configuração a todos os paths da API
                 .allowedOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:8080", "http://localhost:8081") // Domínios permitidos
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT") // Métodos HTTP permitidos
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT", "PATCH") // Métodos HTTP permitidos
                 .allowedHeaders("*") // Cabeçalhos permitidos
                 .allowCredentials(true); // Permite o envio de credenciais (cookies, etc.)
     }
