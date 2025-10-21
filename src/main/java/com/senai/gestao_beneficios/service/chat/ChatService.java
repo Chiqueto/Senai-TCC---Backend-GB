@@ -134,7 +134,7 @@ public class ChatService {
 
         try {
             System.out.println(">>> Tentando API principal (GitHub)...");
-
+            System.out.println(requestBody);
             return githubWebClient.post()
                     .uri("/chat/completions") // O URI pode ser diferente dependendo da sua baseUrl
                     .bodyValue(requestBody)
