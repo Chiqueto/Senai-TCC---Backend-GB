@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senai.gestao_beneficios.DTO.agendamento.AgendamentoRequestDTO;
@@ -55,6 +56,7 @@ public class ChatService {
 
     private record FunctionCall(String name, String arguments) {}
     private record ToolCall(String id, String type, FunctionCall function) {}
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private record ChatResponseMessage(String role, String content, List<ToolCall> tool_calls) {}
     private record Choice(ChatResponseMessage message) {}
     private record ChatCompletionResponse(List<Choice> choices) {}
@@ -63,9 +65,9 @@ public class ChatService {
     private record AgendamentoArgs(String idMedico, Instant horario, String idDependente) {}
     private record SolicitacaoArgs(
             String idBeneficio,
-            BigDecimal valorTotal,
+            String valorTotal,
             TipoPagamento tipoPagamento,
-            Integer qtdeParcelas,
+            String qtdeParcelas,
             String idDependente,
             String descricao
     ) {}
@@ -123,10 +125,12 @@ public class ChatService {
                 "messages", messages,
                 "tools", getToolDefinitions()
         );
+
         try {
             System.out.println(">>> Tentando API principal (GitHub)...");
+
             return githubWebClient.post()
-                    .uri("/v1/chat/completions") // O URI pode ser diferente dependendo da sua baseUrl
+                    .uri("/chat/completions") // O URI pode ser diferente dependendo da sua baseUrl
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(ChatCompletionResponse.class)
@@ -136,15 +140,13 @@ public class ChatService {
                 System.err.println("!!! Rate limit atingido na API principal. Acionando fallback para Hugging Face...");
 
                 Map<String, Object> hfRequestBody = Map.of(
-                        "model", "meta-llama/Llama-3.3-70B-Instruct:groq", // Modelo do Hugging Face
-                        "messages", messages
-                        // O Hugging Face Router não suporta 'tools' da mesma forma, então omitimos
+                        "model", "meta-llama/Llama-4-Scout-17B-16E-Instruct:groq", // Modelo do Hugging Face
+                        "messages", messages,
+                        "tools", getToolDefinitions()
                 );
 
-                // Como a API é compatível, podemos esperar o mesmo tipo de resposta
                 return huggingFaceWebClient.post()
-                        // A URL completa já está no baseUrl, então o uri é vazio
-                        .uri("")
+                        .uri("/chat/completions")
                         .bodyValue(hfRequestBody)
                         .retrieve()
                         .bodyToMono(ChatCompletionResponse.class)
@@ -169,6 +171,7 @@ public class ChatService {
             case "listar_horarios_disponiveis":
                 HorariosArgs args = objectMapper.readValue(arguments, HorariosArgs.class);
                 ApiResponse<List<MedicoAvaiabilityDTO>> apiResponse = medicoService.buscarDisponibilidade(args.idMedico(), args.dia());
+                System.out.println(apiResponse);
                 return objectMapper.writeValueAsString(apiResponse.data());
 
             case "criar_agendamento":
@@ -191,10 +194,10 @@ public class ChatService {
                 SolicitacaoRequestDTO solicitacaoDTO = new SolicitacaoRequestDTO(
                         colaboradorLogado.getId(),
                         solicitacaoArgs.idBeneficio(),
-                        solicitacaoArgs.valorTotal(),
+                        new BigDecimal(solicitacaoArgs.valorTotal()),
                         solicitacaoArgs.idDependente(),
                         solicitacaoArgs.descricao(),
-                        solicitacaoArgs.qtdeParcelas(),
+                        solicitacaoArgs.qtdeParcelas() != null ? Integer.parseInt(solicitacaoArgs.qtdeParcelas()) : null,
                         solicitacaoArgs.tipoPagamento()
                 );
 
@@ -282,13 +285,13 @@ public class ChatService {
                                         "type", "object",
                                         "properties", Map.of(
                                                 "idBeneficio", Map.of("type", "string", "description", "O ID do benefício que o colaborador escolheu."),
-                                                "valorTotal", Map.of("type", "number", "description", "O valor monetário total do benefício solicitado."),
+                                                "valorTotal", Map.of("type", "string", "description", "O valor monetário total do benefício solicitado."),
                                                 "tipoPagamento", Map.of(
                                                         "type", "string",
                                                         "description", "A forma de pagamento escolhida.",
                                                         "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_FOLHA") // Ajuda a IA a saber as opções
                                                 ),
-                                                "qtdeParcelas", Map.of("type", "integer", "description", "A quantidade de parcelas. Obrigatório apenas se tipoPagamento for DESCONTADO_FOLHA."),
+                                                "qtdeParcelas", Map.of("type", "string", "description", "A quantidade de parcelas. Obrigatório apenas se tipoPagamento for DESCONTADO_FOLHA."),
                                                 "idDependente", Map.of("type", "string", "description", "O ID do dependente, se o benefício for para um."),
                                                 "descricao", Map.of("type", "string", "description", "Um texto com observações ou justificativas do colaborador.")
                                         ),
@@ -339,7 +342,7 @@ public class ChatService {
                 "        * `tipoPagamento`: `string` (obrigatório). Valores possíveis: `DOACAO`, `PAGAMENTO_PROPRIO`, `DESCONTADO_FOLHA`.\n" +
                 "        * `qtdeParcelas`: `number` (obrigatório **apenas se** `tipoPagamento` for `DESCONTADO_FOLHA`). Para outros tipos, deve ser `null`.\n" +
                 "        * `idDependente`: `string` (opcional). Use apenas se o benefício for para um dependente.\n" +
-                "        * `descricao`: `string` (opcional). Campo de texto livre para o colaborador adicionar observações ou justificativas.\n" +
+                "        * `descricao`: `string` (opcional). Campo de texto livre para o colaborador adicionar observações ou justificativas, quando o colaborador não informar, crie uma descrição genérica com as informações da solicitação.\n" +
                 "    * **Quando usar:** Como passo final do fluxo de solicitação, após o colaborador ter escolhido o benefício e fornecido todos os detalhes necessários.\n" +
                 "\n" +
                 "### FLUXOS DE CONVERSA ESPERADOS ###\n" +
