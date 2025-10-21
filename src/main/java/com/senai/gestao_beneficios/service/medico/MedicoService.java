@@ -1,5 +1,6 @@
 package com.senai.gestao_beneficios.service.medico;
 
+import com.senai.gestao_beneficios.DTO.disponibilidade.DisponibilidadeMapper;
 import com.senai.gestao_beneficios.DTO.medico.MedicoAvaiabilityDTO;
 import com.senai.gestao_beneficios.DTO.medico.MedicoMapper;
 import com.senai.gestao_beneficios.DTO.medico.MedicoRequestDTO;
@@ -19,10 +20,7 @@ import com.senai.gestao_beneficios.repository.MedicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,12 +30,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MedicoService {
-    final MedicoRepository medicoRepository;
-    final MedicoMapper medicoMapper;
-    final EspecialidadeRepository especialidadeRepository;
-    final DisponibilidadeRepository disponibilidadeRepository;
-    final AgendamentoRepository agendamentoRepository;
+    private final MedicoRepository medicoRepository;
+    private final MedicoMapper medicoMapper;
+    private final EspecialidadeRepository especialidadeRepository;
+    private final DisponibilidadeRepository disponibilidadeRepository;
+    private final AgendamentoRepository agendamentoRepository;
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
+    private final DisponibilidadeMapper disponibilidadeMapper;
 
     public ApiResponse<MedicoResponseDTO> createMedico (MedicoRequestDTO request){
         Optional<Medico> medicoExist = medicoRepository.findByEmail(request.email());
@@ -89,8 +88,24 @@ public class MedicoService {
 
     public ApiResponse<List<MedicoAvaiabilityDTO>> buscarDisponibilidade(String idMedico, LocalDate dia){
 
-        Medico medico = medicoRepository.findById(idMedico).orElseThrow(() -> new NotFoundException("medico", "Médico não encontrado"));
+        // --- 1. BUSCA O MÉDICO E SUAS DISPONIBILIDADES ---
+        Medico medico = medicoRepository.findById(idMedico)
+                .orElseThrow(() -> new NotFoundException("medico", "Médico não encontrado"));
 
+        // --- 2. VALIDA O DIA DA SEMANA (CLÁUSULA DE GUARDA) ---
+        DayOfWeek diaDaSemana = dia.getDayOfWeek();
+        // Supondo que seu mapper converta MONDAY para 1, TUESDAY para 2, ..., SUNDAY para 0
+        int diaParaChecar = disponibilidadeMapper.toInteger(diaDaSemana);
+
+        boolean medicoTrabalhaNoDia = medico.getDisponibilidade().stream()
+                .anyMatch(disponibilidade -> disponibilidade.getDiaSemana() == diaParaChecar);
+
+        // Se o médico não trabalha no dia solicitado, interrompe a execução aqui.
+        if (!medicoTrabalhaNoDia) {
+            throw new BadRequest("O médico não atende neste dia da semana!");
+        }
+
+        // --- 3. BUSCA OS AGENDAMENTOS JÁ EXISTENTES (SÓ SE O DIA FOR VÁLIDO) ---
         Instant inicioDoDia = dia.atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
         Instant fimDoDia = dia.plusDays(1).atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
 
@@ -101,12 +116,13 @@ public class MedicoService {
                 .map(Agendamento::getHorario)
                 .collect(Collectors.toSet());
 
+        // --- 4. GERA A LISTA DE SLOTS ---
         List<MedicoAvaiabilityDTO> disponibilidadeDoDia = new ArrayList<>();
 
         LocalTime slotAtual = medico.getHoraEntrada();
         LocalTime fimDoExpediente = medico.getHoraSaida();
 
-        while (slotAtual.isBefore(fimDoExpediente)) {
+        while (!slotAtual.equals(fimDoExpediente)) { // Usando .equals para mais robustez
 
             Instant slotEmUtc = dia.atTime(slotAtual).atZone(FUSO_HORARIO_NEGOCIO).toInstant();
 
@@ -115,6 +131,7 @@ public class MedicoService {
 
             boolean estaOcupado = horariosOcupados.contains(slotEmUtc);
 
+            // Lógica de disponibilidade simplificada e correta
             boolean estaDisponivel = !ehHorarioAlmoco && !estaOcupado;
 
             disponibilidadeDoDia.add(new MedicoAvaiabilityDTO(slotEmUtc, estaDisponivel));
@@ -122,6 +139,7 @@ public class MedicoService {
             slotAtual = slotAtual.plusMinutes(30);
         }
 
+        // --- 5. RETORNA A RESPOSTA ---
         return new ApiResponse<>(true, disponibilidadeDoDia, null, null, "Disponibilidade do médico recuperada com sucesso.");
     }
 

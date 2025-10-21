@@ -41,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String username = null;
         try {
             username = jwtService.extractUsername(token);
-            System.out.println("Entrou aqui + " + username);
+//            System.out.println("Entrou aqui + " + username);
         } catch (Exception e) {
             // token inválido/expirado — segue sem autenticar
         }
