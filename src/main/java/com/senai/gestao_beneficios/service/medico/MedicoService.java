@@ -100,6 +100,13 @@ public class MedicoService {
         boolean medicoTrabalhaNoDia = medico.getDisponibilidade().stream()
                 .anyMatch(disponibilidade -> disponibilidade.getDiaSemana() == diaParaChecar);
 
+        System.out.println("dia: " + dia);
+        System.out.println("dia da semana: " + diaDaSemana);
+        System.out.println("dia para checar: " + diaParaChecar);
+        System.out.println("Disponibilidade: " + medico.getDisponibilidade());
+
+        System.out.println("Médico trabalha no dia: " + medicoTrabalhaNoDia);
+
         // Se o médico não trabalha no dia solicitado, interrompe a execução aqui.
         if (!medicoTrabalhaNoDia) {
             throw new BadRequest("O médico não atende neste dia da semana!");
