@@ -98,14 +98,14 @@ public class ChatService {
         ChatResponseMessage responseMessage = initialResponse.choices().getFirst().message();
         messages.add(objectMapper.convertValue(responseMessage, new TypeReference<>() {}));
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String matricula = authentication.getName();
+        Colaborador colaboradorLogado = colaboradorRepository.findByMatricula(matricula)
+                .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
+
         if (responseMessage.tool_calls() != null && !responseMessage.tool_calls().isEmpty()) {
 
             ToolCall toolCall = responseMessage.tool_calls().getFirst();
-
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String matricula = authentication.getName();
-            Colaborador colaboradorLogado = colaboradorRepository.findByMatricula(matricula)
-                    .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
 
             String toolResult = executeTool(toolCall.function().name(), toolCall.function().arguments(), colaboradorLogado);
 
@@ -116,11 +116,11 @@ public class ChatService {
             ChatResponseMessage finalResponseMessage = finalResponse.choices().getFirst().message();
             messages.add(objectMapper.convertValue(finalResponseMessage, new TypeReference<>() {}));
 
-            historyService.saveHistory(conversationId, messages); // Supondo um método para salvar a lista
+            historyService.saveHistory(conversationId, messages, colaboradorLogado);
 
             return new ApiResponse<>(true, new ChatResponseDTO(finalResponseMessage.content(), conversationId), null, null, "Mensagem retornada com sucesso!");
         } else {
-            historyService.saveHistory(conversationId, messages);
+            historyService.saveHistory(conversationId, messages, colaboradorLogado);
             return new ApiResponse<>(true, new ChatResponseDTO(responseMessage.content(), conversationId), null, null, "Mensagem retornada com sucesso!");
         }
     }
@@ -312,7 +312,7 @@ public class ChatService {
                                                 "tipoPagamento", Map.of(
                                                         "type", "string",
                                                         "description", "A forma de pagamento escolhida.",
-                                                        "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_EM_FOLHA")
+                                                        "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_FOLHA")
                                                 ),
                                                 "qtdeParcelas", Map.of("type", "string", "description", "A quantidade de parcelas."),
                                                 // --- PARÂMETRO ALTERADO ---
@@ -390,10 +390,11 @@ public class ChatService {
                 "\n" +
                 "### REGRAS GERAIS ###\n" +
                 "1.  **Sempre colete as informações passo a passo.** Não peça tudo de uma vez.\n" +
-                "2.  **Nunca execute uma ação final sem a confirmação explícita do usuário.** (ex: \"Confirma o agendamento para terça (dia 20/11/2025) às 10:00 com o Dr. Carlos?\").\n" +
+                "2.  **NUNCA execute uma ação final sem a confirmação explícita do usuário.** (ex: \"Confirma o agendamento para terça (dia 20/11/2025) às 10:00 com o Dr. Carlos?\").\n" +
                 "3.  **Use a identidade do usuário logado:** O `idColaborador` para as ferramentas deve ser sempre o do usuário que está interagindo com você. Não pergunte a ele qual é o seu ID.\n" +
                 "4.  **Se não souber:** Se a pergunta do usuário fugir do escopo de agendamentos ou benefícios, ou se você não tiver uma ferramenta para ajudar, direcione-o para o canal oficial: \"Para este assunto, por favor, entre em contato diretamente com o RH.\n"+
-                "5.  **AJA PRIMEIRO, FALE DEPOIS:** Se a mensagem do usuário for uma pergunta direta que pode ser respondida imediatamente por uma ferramenta sem parâmetros (como `listar_beneficios` ou `listar_medicos`), sua primeira ação deve ser chamar a ferramenta. Não responda com texto de confirmação como \"Vou buscar para você\". Chame a ferramenta, receba o resultado, e só então formule a resposta em texto para o usuário já contendo a informação solicitada.";
+                "5.  **AJA PRIMEIRO, FALE DEPOIS:** Se a mensagem do usuário for uma pergunta direta que pode ser respondida imediatamente por uma ferramenta sem parâmetros (como `listar_beneficios` ou `listar_medicos`), sua primeira ação deve ser chamar a ferramenta. Não responda com texto de confirmação como \"Vou buscar para você\". Chame a ferramenta, receba o resultado, e só então formule a resposta em texto para o usuário já contendo a informação solicitada.\n"+
+                "6.  **REGRA DE OURO - CONFIRMAÇÃO PÓS-AÇÃO:** Você **NUNCA** deve informar ao usuário que uma ação (como criar um agendamento ou solicitação) foi concluída com sucesso ANTES de você usar a ferramenta correspondente (`criar_agendamento`, `criar_solicitacao_beneficio`) e receber de volta o resultado da execução dessa ferramenta. Sua resposta de sucesso **DEVE** ser baseada no retorno da ferramenta. Se a ferramenta retornar um erro, você deve informar o erro ao usuário.";
     }
 
     private String findDependenteIdByName(String colaboradorId, String nomeDependente) throws JsonProcessingException {

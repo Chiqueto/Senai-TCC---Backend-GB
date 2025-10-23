@@ -102,9 +102,9 @@ public class MedicoService {
 
 
         // Se o médico não trabalha no dia solicitado, interrompe a execução aqui.
-        if (!medicoTrabalhaNoDia) {
-            throw new BadRequest("O médico não atende neste dia da semana!");
-        }
+//        if (!medicoTrabalhaNoDia) {
+//            throw new BadRequest("O médico não atende neste dia da semana!");
+//        }
 
         // --- 3. BUSCA OS AGENDAMENTOS JÁ EXISTENTES (SÓ SE O DIA FOR VÁLIDO) ---
         Instant inicioDoDia = dia.atStartOfDay(FUSO_HORARIO_NEGOCIO).toInstant();
@@ -133,7 +133,7 @@ public class MedicoService {
             boolean estaOcupado = horariosOcupados.contains(slotEmUtc);
 
             // Lógica de disponibilidade simplificada e correta
-            boolean estaDisponivel = !ehHorarioAlmoco && !estaOcupado;
+            boolean estaDisponivel = medicoTrabalhaNoDia && !ehHorarioAlmoco && !estaOcupado;
 
             disponibilidadeDoDia.add(new MedicoAvaiabilityDTO(slotEmUtc, estaDisponivel));
 
