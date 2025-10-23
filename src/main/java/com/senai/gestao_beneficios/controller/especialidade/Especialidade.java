@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class Especialidade {
     final EspecialidadeService especialidadeService;
 
     @PostMapping("")
+    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
     @Operation(
             summary = "Realiza o cadastro de uma especialidade",
             description = "Cria uma nova especialidade."

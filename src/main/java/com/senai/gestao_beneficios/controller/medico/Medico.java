@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class Medico {
     final MedicoService service;
 
     @PostMapping("")
+    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
     @Operation(
             summary = "Realiza o cadastro de um médico",
             description = "Cria um novo médico."
