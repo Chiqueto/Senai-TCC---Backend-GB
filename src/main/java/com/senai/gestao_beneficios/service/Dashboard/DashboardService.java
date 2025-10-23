@@ -25,7 +25,7 @@ public class DashboardService {
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
     public DashboardResponseDTO getDashboardResumo(int ano, Integer mes) {
-        if (mes < 1 || mes > 12){
+        if (mes != null && (mes < 1 || mes > 12)){
             throw new DateTimeException("Mês informado inválido. Mês deve estar entre 1 e 12");
         }
 
