@@ -57,6 +57,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), ex.getMessage());
     }
 
+    @ExceptionHandler(DateTimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDateTimeException(DateTimeException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), ex.getMessage());
+    }
+
+
     @ExceptionHandler(ServerException.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneric(ServerException ex) {
         System.out.println(ex);
