@@ -51,7 +51,8 @@ public class MedicoMapper {
         return new MedicoResumeDTO(
                 medico.getId(),
                 medico.getNome(),
-                new EspecialidadeDTO(medico.getId(), medico.getNome())
+                new EspecialidadeDTO(medico.getEspecialidade().getId(), medico.getEspecialidade().getNome()
+                )
         );
     }
 
