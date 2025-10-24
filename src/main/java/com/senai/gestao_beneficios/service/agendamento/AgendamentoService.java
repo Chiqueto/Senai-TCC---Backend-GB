@@ -2,7 +2,6 @@ package com.senai.gestao_beneficios.service.agendamento;
 
 import com.senai.gestao_beneficios.DTO.agendamento.*;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
-import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
 import com.senai.gestao_beneficios.domain.agendamento.Agendamento;
 import com.senai.gestao_beneficios.domain.agendamento.StatusAgendamento;
 import com.senai.gestao_beneficios.domain.colaborador.Colaborador;
@@ -10,12 +9,12 @@ import com.senai.gestao_beneficios.domain.colaborador.Funcao;
 import com.senai.gestao_beneficios.domain.dependente.Dependente;
 import com.senai.gestao_beneficios.domain.medico.Disponibilidade;
 import com.senai.gestao_beneficios.domain.medico.Medico;
-import com.senai.gestao_beneficios.domain.solicitacao.Solicitacao;
 import com.senai.gestao_beneficios.infra.exceptions.*;
 import com.senai.gestao_beneficios.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -24,6 +23,8 @@ import java.time.*;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.senai.gestao_beneficios.specifications.AgendamentoSpecification.*;
 
 @Service
 @RequiredArgsConstructor
@@ -143,8 +144,12 @@ public class AgendamentoService {
 
     }
 
-    public Page<AgendamentoResponseDTO> getAllAgendamentos(Pageable pageable){
-        Page<Agendamento> agendamentoPage = pageAgendamentoRepository.findAll(pageable);
+    public Page<AgendamentoResponseDTO> getAllAgendamentos(String colaboradorId, StatusAgendamento status, Pageable pageable){
+        Specification<Agendamento> spec = Specification
+                .allOf(comColaboradorId(colaboradorId))
+                .and(comStatus(status));
+
+        Page<Agendamento> agendamentoPage = pageAgendamentoRepository.findAll(spec, pageable);
 
         Page<AgendamentoResponseDTO> agendamentoResponseDTOSPage = agendamentoPage.map(agendamento -> mapper.toDTO(agendamento));
 
