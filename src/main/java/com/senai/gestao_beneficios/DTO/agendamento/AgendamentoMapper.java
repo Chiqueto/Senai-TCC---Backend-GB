@@ -35,7 +35,6 @@ public class AgendamentoMapper {
         DependenteDTO dependenteDTO = agendamento.getDependente() != null ?
                 dependenteMapper.toDTO(agendamento.getDependente()) : null;
 
-
         return new AgendamentoResponseDTO(
                 agendamento.getId(),
                 colaboradorDTO,
