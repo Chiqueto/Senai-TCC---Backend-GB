@@ -8,8 +8,11 @@ import com.senai.gestao_beneficios.DTO.reponsePattern.ApiMeta;
 import com.senai.gestao_beneficios.DTO.reponsePattern.ApiResponse;
 import com.senai.gestao_beneficios.DTO.reponsePattern.Pagination;
 import com.senai.gestao_beneficios.DTO.solicitacao.SolicitacaoResponseDTO;
+import com.senai.gestao_beneficios.domain.agendamento.StatusAgendamento;
+import com.senai.gestao_beneficios.domain.solicitacao.StatusSolicitacao;
 import com.senai.gestao_beneficios.service.agendamento.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -102,9 +105,16 @@ public class Agendamento {
     @GetMapping("")
     @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
     public ResponseEntity<ApiResponse<List<AgendamentoResponseDTO>>> buscarTodosOsAgendamentos(
-            @PageableDefault(size = 10, sort = "horario", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(required = false) String colaboradorId,
 
-        Page<AgendamentoResponseDTO> paginaDeAgendamentos = service.getAllAgendamentos(pageable);
+            @RequestParam(required = false)
+            StatusAgendamento status,
+
+            @PageableDefault(size = 10, sort = "horario", direction = Sort.Direction.DESC) Pageable pageable)
+
+    {
+
+        Page<AgendamentoResponseDTO> paginaDeAgendamentos = service.getAllAgendamentos(colaboradorId, status, pageable);
 
         Pagination pagination = new Pagination(
                 paginaDeAgendamentos.getNumber(),           // A página atual
