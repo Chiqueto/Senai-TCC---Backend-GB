@@ -29,6 +29,7 @@ import com.senai.gestao_beneficios.repository.ColaboradorRepository;
 import com.senai.gestao_beneficios.service.ColaboradorService;
 import com.senai.gestao_beneficios.service.agendamento.AgendamentoService;
 import com.senai.gestao_beneficios.service.beneficio.BeneficioService;
+import com.senai.gestao_beneficios.service.documento.B2Service;
 import com.senai.gestao_beneficios.service.medico.MedicoService;
 import com.senai.gestao_beneficios.service.solicitacao.SolicitacaoService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -57,6 +59,7 @@ public class ChatService {
     private final ColaboradorService colaboradorService;
     private final ChatHistoryService historyService;
     private final ColaboradorRepository colaboradorRepository;
+    private final B2Service documentoService;
     private static final ZoneId FUSO_HORARIO_NEGOCIO = ZoneId.of("America/Sao_Paulo");
 
 
@@ -74,47 +77,67 @@ public class ChatService {
             String valorTotal,
             TipoPagamento tipoPagamento,
             String qtdeParcelas,
-            String idDependente,
+            String nomeDependente,
             String descricao
     ) {}
 
 
     public ApiResponse<ChatResponseDTO> getChatResponse(ChatRequestDTO requestDTO) throws Exception {
 
-        // --- 1. GERENCIA O HISTÓRICO E A MENSAGEM DO USUÁRIO ---
         String conversationId = (requestDTO.conversationId() == null || requestDTO.conversationId().isBlank())
-                ? UUID.randomUUID().toString()
-                : requestDTO.conversationId();
-
+                ? UUID.randomUUID().toString() : requestDTO.conversationId();
         List<Map<String, Object>> messages = historyService.getHistory(conversationId);
         if (messages.isEmpty()) {
             messages.add(Map.of("role", "system", "content", getSystemPrompt(FUSO_HORARIO_NEGOCIO)));
         }
-        Map<String, Object> userMessage = Map.of("role", "user", "content", requestDTO.mensagem());
-        messages.add(userMessage);
+        messages.add(Map.of("role", "user", "content", requestDTO.mensagem()));
 
-        // --- 2. FAZ A PRIMEIRA CHAMADA À IA ---
         ChatCompletionResponse initialResponse = makeApiCall(messages);
         ChatResponseMessage responseMessage = initialResponse.choices().getFirst().message();
-        messages.add(objectMapper.convertValue(responseMessage, new TypeReference<>() {}));
+        messages.add(objectMapper.convertValue(responseMessage, new TypeReference<>() {
+        }));
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String matricula = authentication.getName();
-        Colaborador colaboradorLogado = colaboradorRepository.findByMatricula(matricula)
-                .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
-
+        Colaborador colaboradorLogado = null;
         if (responseMessage.tool_calls() != null && !responseMessage.tool_calls().isEmpty()) {
-
             ToolCall toolCall = responseMessage.tool_calls().getFirst();
+            String toolName = toolCall.function().name();
+            String toolArgumentsJson = toolCall.function().arguments();
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String matricula = authentication.getName();
+            colaboradorLogado = colaboradorRepository.findByMatricula(matricula)
+                    .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
 
-            String toolResult = executeTool(toolCall.function().name(), toolCall.function().arguments(), colaboradorLogado);
+            if ("criar_agendamento".equals(toolName) || "criar_solicitacao_beneficio".equals(toolName)) {
+                Map<String, Object> argumentsMap = objectMapper.readValue(toolArgumentsJson, new TypeReference<>() {
+                });
+
+                if (argumentsMap.containsKey("nomeDependente") && argumentsMap.get("nomeDependente") != null) {
+                    String nomeDependente = (String) argumentsMap.get("nomeDependente");
+
+                    // Busca o ID do dependente pelo nome
+                    String idDependente = findDependenteIdByName(colaboradorLogado.getId(), nomeDependente);
+
+                    // Remove o 'nomeDependente' e adiciona o 'idDependente'
+                    argumentsMap.remove("nomeDependente");
+                    argumentsMap.put("idDependente", idDependente);
+
+                    // Atualiza a string JSON com os argumentos corrigidos
+                    toolArgumentsJson = objectMapper.writeValueAsString(argumentsMap);
+                }
+            }
+
+            // --- FIM DA LÓGICA DE TRADUÇÃO ---
+
+            // Agora, o executeTool sempre receberá o 'idDependente' se necessário
+            String toolResult = executeTool(toolName, toolArgumentsJson, colaboradorLogado);
 
             Map<String, Object> toolResponseMessage = Map.of("role", "tool", "tool_call_id", toolCall.id(), "content", toolResult);
             messages.add(toolResponseMessage);
 
             ChatCompletionResponse finalResponse = makeApiCall(messages);
             ChatResponseMessage finalResponseMessage = finalResponse.choices().getFirst().message();
-            messages.add(objectMapper.convertValue(finalResponseMessage, new TypeReference<>() {}));
+            messages.add(objectMapper.convertValue(finalResponseMessage, new TypeReference<>() {
+            }));
 
             historyService.saveHistory(conversationId, messages, colaboradorLogado);
 
@@ -123,6 +146,45 @@ public class ChatService {
             historyService.saveHistory(conversationId, messages, colaboradorLogado);
             return new ApiResponse<>(true, new ChatResponseDTO(responseMessage.content(), conversationId), null, null, "Mensagem retornada com sucesso!");
         }
+    }
+
+    public ApiResponse<ChatResponseDTO> processarUploadPendente(
+            MultipartFile file,
+            String conversationId,
+            String pendingDataJson
+    ) throws Exception {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String matricula = authentication.getName();
+        Colaborador colaboradorLogado = colaboradorRepository.findByMatricula(matricula)
+                .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
+
+        SolicitacaoArgs solicitacaoArgs = objectMapper.readValue(pendingDataJson, SolicitacaoArgs.class);
+        SolicitacaoRequestDTO solicitacaoDTO = new SolicitacaoRequestDTO(
+                colaboradorLogado.getId(),
+                solicitacaoArgs.idBeneficio(),
+                new BigDecimal(solicitacaoArgs.valorTotal()),
+                solicitacaoArgs.nomeDependente != null ? findDependenteIdByName(colaboradorLogado.getId(), solicitacaoArgs.nomeDependente) : null,
+                solicitacaoArgs.descricao(),
+                solicitacaoArgs.qtdeParcelas() != null ? Integer.parseInt(solicitacaoArgs.qtdeParcelas()) : null,
+                solicitacaoArgs.tipoPagamento()
+        );
+
+        ApiResponse<SolicitacaoResponseDTO> solicitacaoResponse = solicitacaoService.criarSolicitacao(solicitacaoDTO);
+        String solicitacaoId = solicitacaoResponse.data().id();
+
+        // 4. Envia o documento para a solicitação recém-criada
+        documentoService.salvarArquivoNoB2(file, solicitacaoId, colaboradorLogado.getId());
+
+        // 5. Formula uma resposta final de sucesso
+        String respostaFinal = "Obrigado! Seu documento foi recebido e a solicitação de número " + solicitacaoId + " foi criada com sucesso. A gestão irá analisar e você será notificado.";
+
+        // Salva o estado final da conversa
+        List<Map<String, Object>> messages = historyService.getHistory(conversationId);
+        messages.add(Map.of("role", "assistant", "content", respostaFinal));
+        historyService.saveHistory(conversationId, messages, colaboradorLogado);
+
+        return new ApiResponse<>(true, new ChatResponseDTO(respostaFinal, conversationId), null, null, "Processo finalizado.");
     }
 
     private ChatCompletionResponse makeApiCall(List<Map<String, Object>> messages) {
@@ -211,7 +273,7 @@ public class ChatService {
                         colaboradorLogado.getId(),
                         solicitacaoArgs.idBeneficio(),
                         new BigDecimal(solicitacaoArgs.valorTotal()),
-                        solicitacaoArgs.idDependente(),
+                        solicitacaoArgs.nomeDependente(),
                         solicitacaoArgs.descricao(),
                         solicitacaoArgs.qtdeParcelas() != null ? Integer.parseInt(solicitacaoArgs.qtdeParcelas()) : null,
                         solicitacaoArgs.tipoPagamento()
@@ -302,22 +364,17 @@ public class ChatService {
                 Map.of(
                         "type", "function",
                         "function", Map.of(
-                                "name", "criar_solicitacao_beneficio",
-                                "description", "Inicia uma nova solicitação de benefício para o colaborador logado.",
+                                "name", "aguardar_documento_para_solicitacao",
+                                "description", "Deve ser usada QUANDO todos os dados de uma solicitação de benefício forem coletados e o próximo passo for pedir o documento ao usuário.",
                                 "parameters", Map.of(
                                         "type", "object",
                                         "properties", Map.of(
-                                                "idBeneficio", Map.of("type", "string", "description", "O ID do benefício escolhido."),
-                                                "valorTotal", Map.of("type", "string", "description", "O valor monetário total do benefício solicitado."),
-                                                "tipoPagamento", Map.of(
-                                                        "type", "string",
-                                                        "description", "A forma de pagamento escolhida.",
-                                                        "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_FOLHA")
-                                                ),
-                                                "qtdeParcelas", Map.of("type", "string", "description", "A quantidade de parcelas."),
-                                                // --- PARÂMETRO ALTERADO ---
-                                                "nomeDependente", Map.of("type", "string", "description", "O NOME do dependente, se o benefício for para um."),
-                                                "descricao", Map.of("type", "string", "description", "Um texto com observações ou justificativas.")
+                                                "idBeneficio", Map.of("type", "string"),
+                                                "valorTotal", Map.of("type", "string"),
+                                                "tipoPagamento", Map.of("type", "string", "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_FOLHA")),
+                                                "qtdeParcelas", Map.of("type", "string"),
+                                                "nomeDependente", Map.of("type", "string"),
+                                                "descricao", Map.of("type", "string")
                                         ),
                                         "required", List.of("idBeneficio", "valorTotal", "tipoPagamento")
                                 )
@@ -357,17 +414,12 @@ public class ChatService {
                 "    * **Parâmetros:** `idColaborador` (obrigatório), `idMedico` (obrigatório), `horario` (obrigatório, a string UTC exata retornada por `listar_horarios_disponiveis`), `idDependente` (opcional).\n" +
                 "    * **Quando usar:** Como passo final do fluxo de agendamento, após o colaborador confirmar o horário.\n" +
                 "\n" +
-                "5.  **`criar_solicitacao_beneficio(idColaborador: string, idBeneficio: string, valorTotal: number, tipoPagamento: string, qtdeParcelas: number | null, idDependente: string | null, descricao: string | null)`**:\n" +
-                "    * **Descrição:** Inicia uma nova solicitação de benefício.\n" +
-                "    * **Parâmetros:**\n" +
-                "        * `idColaborador`: `string` (obrigatório). Use sempre o ID do usuário logado.\n" +
-                "        * `idBeneficio`: `string` (obrigatório). O ID do benefício que o colaborador escolheu.\n" +
-                "        * `valorTotal`: `number` (obrigatório). O valor monetário total do benefício solicitado.\n" +
-                "        * `tipoPagamento`: `string` (obrigatório). Valores possíveis: `DOACAO`, `PAGAMENTO_PROPRIO`, `DESCONTADO_FOLHA`.\n" +
-                "        * `qtdeParcelas`: `number` (obrigatório **apenas se** `tipoPagamento` for `DESCONTADO_FOLHA`). Para outros tipos, deve ser `null`.\n" +
-                "        * `idDependente`: `string` (opcional). Use apenas se o benefício for para um dependente.\n" +
-                "        * `descricao`: `string` (opcional). Campo de texto livre para o colaborador adicionar observações ou justificativas, quando o colaborador não informar, crie uma descrição genérica com as informações da solicitação.\n" +
-                "    * **Quando usar:** Como passo final do fluxo de solicitação, após o colaborador ter escolhido o benefício e fornecido todos os detalhes necessários.\n" +
+                "5. **`buscar_dependentes_do_colaborador()`**:\n" +
+                "    * **Descrição:** Retorna a lista de dependentes (com nome e ID) do colaborador logado. Use esta ferramenta para descobrir o ID de um dependente quando o usuário fornecer o nome.\n" +
+                "\n" +
+                "6.  **`aguardar_documento_para_solicitacao(idBeneficio: string, valorTotal: string, tipoPagamento: string, qtdeParcelas: string | null, nomeDependente: string | null, descricao: string | null)`**:\n" +
+                "    * **Descrição:** Deve ser usada como passo final da coleta de dados para uma solicitação de benefício. Esta ferramenta sinaliza para o frontend que o usuário precisa enviar um documento para prosseguir.\n" +
+                "    * **Quando usar:** Use QUANDO tiver todos os dados de uma solicitação e o próximo passo for pedir o documento ao usuário.\n" +
                 "\n" +
                 "### FLUXOS DE CONVERSA ESPERADOS ###\n" +
                 "\n" +
@@ -383,10 +435,15 @@ public class ChatService {
                 "\n" +
                 "**Fluxo 2: Solicitação de Benefício**\n" +
                 "1.  Identifique a intenção de solicitar um benefício.\n" +
-                "2.  Pergunte qual benefício o colaborador deseja. Se ele não souber, use `listar_beneficios()` para mostrar as opções.\n" +
-                "3.  Com base no benefício escolhido, determine quais informações são necessárias (se precisa de valor, se precisa de parcelas, etc.). Faça as perguntas necessárias ao colaborador.\n" +
-                "4.  Use `criar_solicitacao_beneficio()` com todos os parâmetros coletados.\n" +
-                "5.  Após a criação, informe ao colaborador os próximos passos do processo, como a necessidade de enviar um documento ou aguardar a aprovação da gestão.\n" +
+                "2.  Pergunte qual benefício ele deseja. Se ele não souber, use a ferramenta `listar_beneficios()` para mostrar as opções.\n" +
+                "3.  Após o usuário escolher um benefício, colete as informações necessárias **uma por uma**:\n" +
+                "    - \"Qual o valor total que você precisa?\"\n" +
+                "    - \"Qual será a forma de pagamento?\"\n" +
+                "    - Se a forma for `DESCONTADO_EM_FOLHA`, pergunte: \"Em quantas parcelas?\"\n" +
+                "    - \"O benefício é para um dependente?\" Se sim, pergunte o nome.\n" +
+                "    - \"Gere uma observação genérica\"\n" +
+                "4.  Quando tiver coletado **todos** os dados, **NÃO confirme o sucesso**. Em vez disso, chame a ferramenta `pedir_documento_para_solicitacao`, preenchendo todos os argumentos com os dados que você coletou.\n" +
+                "5.  Sua resposta final para o usuário deve ser **apenas** um texto simples pedindo o documento, como: \"Entendido. Para prosseguir com a sua solicitação, por favor, anexe agora o documento de comprovação (com um orçamento).\"\n" +
                 "\n" +
                 "### REGRAS GERAIS ###\n" +
                 "1.  **Sempre colete as informações passo a passo.** Não peça tudo de uma vez.\n" +

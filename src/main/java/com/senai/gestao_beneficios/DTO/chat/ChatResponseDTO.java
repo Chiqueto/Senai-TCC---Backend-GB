@@ -2,6 +2,11 @@ package com.senai.gestao_beneficios.DTO.chat;
 
 public record  ChatResponseDTO(
         String resposta,
-        String conversationId // <-- CAMPO NOVO
+        String conversationId,
+        String nextAction,  // <-- NOVO
+        Object pendingData
 ) {
+    public ChatResponseDTO(String resposta, String conversationId) {
+        this(resposta, conversationId, null, null);
+    }
 }
