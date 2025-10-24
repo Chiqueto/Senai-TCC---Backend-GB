@@ -9,7 +9,8 @@
 
 Backend de um sistema corporativo para gestão de benefícios e agendamentos, potencializado por um agente de IA conversacional para automação de processos.
 
-![Dashboard do Projeto](https://i.imgur.com/8ff109.png)
+![Dashboard do Projeto](<img width="1905" height="858" alt="image" src="https://github.com/user-attachments/assets/dcee9d1b-2139-466d-90e5-dc141b6ec12e" />
+)
 
 ## 📄 Sobre o Projeto
 
@@ -101,8 +102,8 @@ A documentação completa dos endpoints está disponível via Swagger UI. Após 
 
 **[Luís Felipe Mozer Chiqueto]**
 
--   LinkedIn: [[MEU_LINKEDIN](https://www.linkedin.com/in/luis-felipe-chiqueto/)]
--   GitHub: [[Chiqueto Github](https://github.com/Chiqueto)]
--   Portfólio: [[MEU_PORTFOLIO](https://new-portifolio-smoky.vercel.app/)]
+-   LinkedIn: [[Acesse aqui!](https://www.linkedin.com/in/luis-felipe-chiqueto/)]
+-   GitHub: [[Meu github](https://github.com/Chiqueto)]
+-   Portfólio: [[Acesse meu portifólio!](https://new-portifolio-smoky.vercel.app/)]
 
 ---
