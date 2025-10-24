@@ -9,9 +9,6 @@
 
 Backend de um sistema corporativo para gestão de benefícios e agendamentos, potencializado por um agente de IA conversacional para automação de processos.
 
-![Dashboard do Projeto](<img width="1905" height="858" alt="image" src="https://github.com/user-attachments/assets/dcee9d1b-2139-466d-90e5-dc141b6ec12e" />
-)
-
 ## 📄 Sobre o Projeto
 
 O **Gestão de Benefícios** é uma aplicação robusta desenvolvida em Java com Spring Boot, projetada para modernizar e automatizar os processos de RH de uma empresa. O sistema possui dois módulos principais: um para o gerenciamento completo do ciclo de vida de solicitações de benefícios (desde o pedido do colaborador até a aprovação da gestão) e outro para o agendamento de consultas médicas com profissionais da empresa.
