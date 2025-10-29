@@ -107,7 +107,31 @@ public class ChatService {
             colaboradorLogado = colaboradorRepository.findByMatricula(matricula)
                     .orElseThrow(() -> new RuntimeException("Usuário autenticado não encontrado."));
 
-            if ("criar_agendamento".equals(toolName) || "criar_solicitacao_beneficio".equals(toolName)) {
+            if ("aguardar_documento_para_solicitacao".equals(toolName)) {
+
+                // 1. Parseia os dados que a IA coletou. Isso vira o 'pendingData'.
+                SolicitacaoArgs pendingData = objectMapper.readValue(toolArgumentsJson, SolicitacaoArgs.class);
+
+                // 2. Define a mensagem de pausa (conforme seu SystemPrompt)
+                String pauseMessage = "Entendido. Para prosseguir com a sua solicitação, por favor, anexe agora o documento de comprovação (com um orçamento).";
+
+                // 3. Salva o histórico (importante para o próximo passo)
+                historyService.saveHistory(conversationId, messages, colaboradorLogado);
+
+                // 4. Cria a Resposta Especial com nextAction e pendingData
+                // (Assumindo que seu DTO tem os campos: resposta, conversationId, nextAction, pendingData)
+                ChatResponseDTO chatResponse = new ChatResponseDTO(
+                        pauseMessage,
+                        conversationId,
+                        "AWAITING_UPLOAD", // <-- O nextAction que você quer
+                        pendingData        // <-- Os dados para o /chat/upload
+                );
+
+                // 5. Retorna IMEDIATAMENTE para o frontend
+                return new ApiResponse<>(true, chatResponse, null, null, "Aguardando documento para upload.");
+            }
+
+            if ("criar_agendamento".equals(toolName)) {
                 Map<String, Object> argumentsMap = objectMapper.readValue(toolArgumentsJson, new TypeReference<>() {
                 });
 
@@ -213,6 +237,8 @@ public class ChatService {
                         "tools", getToolDefinitions()
                 );
 
+                System.out.println(hfRequestBody);
+
                 return huggingFaceWebClient.post()
                         .uri("/chat/completions")
                         .bodyValue(hfRequestBody)
@@ -258,32 +284,13 @@ public class ChatService {
                 AgendamentoRequestDTO agendamentoDTO = new AgendamentoRequestDTO(
                         colaboradorLogado.getId(),
                         agendamentoArgs.idMedico(),
-                        agendamentoArgs.idDependente(),
+                        idDependenteAgendamento,
                         agendamentoArgs.horario()
                 );
 
                 ApiResponse<AgendamentoResponseDTO> agendamentoResponse = agendamentoService.criarAgendamento(agendamentoDTO);
 
                 return objectMapper.writeValueAsString(agendamentoResponse.data());
-
-            case "criar_solicitacao_beneficio":
-                SolicitacaoArgs solicitacaoArgs = objectMapper.readValue(arguments, SolicitacaoArgs.class);
-
-                SolicitacaoRequestDTO solicitacaoDTO = new SolicitacaoRequestDTO(
-                        colaboradorLogado.getId(),
-                        solicitacaoArgs.idBeneficio(),
-                        new BigDecimal(solicitacaoArgs.valorTotal()),
-                        solicitacaoArgs.nomeDependente(),
-                        solicitacaoArgs.descricao(),
-                        solicitacaoArgs.qtdeParcelas() != null ? Integer.parseInt(solicitacaoArgs.qtdeParcelas()) : null,
-                        solicitacaoArgs.tipoPagamento()
-                );
-
-                // 3. Chama o service
-                ApiResponse<SolicitacaoResponseDTO> solicitacaoResponse = solicitacaoService.criarSolicitacao(solicitacaoDTO);
-
-                // 4. Retorna o resultado para a IA
-                return objectMapper.writeValueAsString(solicitacaoResponse.data());
 
             default:
                 return "{\"error\": \"Ferramenta desconhecida: " + toolName + "\"}";
@@ -354,7 +361,7 @@ public class ChatService {
                                                 "idMedico", Map.of("type", "string", "description", "O ID do médico escolhido."),
                                                 "horario", Map.of("type", "string", "description", "O horário exato escolhido, em formato UTC ISO 8601."),
                                                 // --- PARÂMETRO ALTERADO ---
-                                                "nomeDependente", Map.of("type", "string", "description", "O NOME do dependente, se a consulta não for para o próprio colaborador.")
+                                                "nomeDependente", Map.of("type", List.of("string", "null"), "description", "O NOME do dependente, se a consulta não for para o próprio colaborador.")
                                         ),
                                         "required", List.of("idMedico", "horario")
                                 )
@@ -372,9 +379,9 @@ public class ChatService {
                                                 "idBeneficio", Map.of("type", "string"),
                                                 "valorTotal", Map.of("type", "string"),
                                                 "tipoPagamento", Map.of("type", "string", "enum", List.of("DOACAO", "PAGAMENTO_PROPRIO", "DESCONTADO_FOLHA")),
-                                                "qtdeParcelas", Map.of("type", "string"),
-                                                "nomeDependente", Map.of("type", "string"),
-                                                "descricao", Map.of("type", "string")
+                                                "qtdeParcelas", Map.of("type", List.of("string", "null")),
+                                                "nomeDependente", Map.of("type", List.of("string", "null")),
+                                                "descricao", Map.of("type", List.of("string", "null"))
                                         ),
                                         "required", List.of("idBeneficio", "valorTotal", "tipoPagamento")
                                 )
@@ -409,9 +416,9 @@ public class ChatService {
                 "    * **Parâmetros:** `idMedico` (obrigatório), `dia` (obrigatório, formato AAAA-MM-DD).\n" +
                 "    * **Quando usar:** Depois que o colaborador escolher um médico e um dia.\n" +
                 "\n" +
-                "4.  **`criar_agendamento(idColaborador: string, idMedico: string, horario: string, idDependente: string | null)`**:\n" +
+                "4.  **`criar_agendamento(idMedico: string, horario: string, nomeDependente: string | null)`**:\n" +
                 "    * **Descrição:** Cria um novo agendamento de consulta.\n" +
-                "    * **Parâmetros:** `idColaborador` (obrigatório), `idMedico` (obrigatório), `horario` (obrigatório, a string UTC exata retornada por `listar_horarios_disponiveis`), `idDependente` (opcional).\n" +
+                "    * **Parâmetros:** `idMedico` (obrigatório), `horario` (obrigatório), `nomeDependente` (opcional - envie o NOME do dependente, ou null se for para o próprio colaborador).\n" +
                 "    * **Quando usar:** Como passo final do fluxo de agendamento, após o colaborador confirmar o horário.\n" +
                 "\n" +
                 "5. **`buscar_dependentes_do_colaborador()`**:\n" +
@@ -442,7 +449,7 @@ public class ChatService {
                 "    - Se a forma for `DESCONTADO_EM_FOLHA`, pergunte: \"Em quantas parcelas?\"\n" +
                 "    - \"O benefício é para um dependente?\" Se sim, pergunte o nome.\n" +
                 "    - \"Gere uma observação genérica\"\n" +
-                "4.  Quando tiver coletado **todos** os dados, **NÃO confirme o sucesso**. Em vez disso, chame a ferramenta `pedir_documento_para_solicitacao`, preenchendo todos os argumentos com os dados que você coletou.\n" +
+                "4.  Quando tiver coletado **todos** os dados, **NÃO confirme o sucesso**. Em vez disso, chame a ferramenta `aguardar_documento_para_solicitacao`, preenchendo todos os argumentos com os dados que você coletou.\n" + // (Vírgula extra removida daqui)
                 "5.  Sua resposta final para o usuário deve ser **apenas** um texto simples pedindo o documento, como: \"Entendido. Para prosseguir com a sua solicitação, por favor, anexe agora o documento de comprovação (com um orçamento).\"\n" +
                 "\n" +
                 "### REGRAS GERAIS ###\n" +
@@ -451,7 +458,7 @@ public class ChatService {
                 "3.  **Use a identidade do usuário logado:** O `idColaborador` para as ferramentas deve ser sempre o do usuário que está interagindo com você. Não pergunte a ele qual é o seu ID.\n" +
                 "4.  **Se não souber:** Se a pergunta do usuário fugir do escopo de agendamentos ou benefícios, ou se você não tiver uma ferramenta para ajudar, direcione-o para o canal oficial: \"Para este assunto, por favor, entre em contato diretamente com o RH.\n"+
                 "5.  **AJA PRIMEIRO, FALE DEPOIS:** Se a mensagem do usuário for uma pergunta direta que pode ser respondida imediatamente por uma ferramenta sem parâmetros (como `listar_beneficios` ou `listar_medicos`), sua primeira ação deve ser chamar a ferramenta. Não responda com texto de confirmação como \"Vou buscar para você\". Chame a ferramenta, receba o resultado, e só então formule a resposta em texto para o usuário já contendo a informação solicitada.\n"+
-                "6.  **REGRA DE OURO - CONFIRMAÇÃO PÓS-AÇÃO:** Você **NUNCA** deve informar ao usuário que uma ação (como criar um agendamento ou solicitação) foi concluída com sucesso ANTES de você usar a ferramenta correspondente (`criar_agendamento`, `criar_solicitacao_beneficio`) e receber de volta o resultado da execução dessa ferramenta. Sua resposta de sucesso **DEVE** ser baseada no retorno da ferramenta. Se a ferramenta retornar um erro, você deve informar o erro ao usuário.";
+                "6.  **REGRA DE OURO - CONFIRMAÇÃO PÓS-AÇÃO:** Você **NUNCA** deve informar ao usuário que uma ação (como criar um agendamento ou solicitação) foi concluída com sucesso ANTES de você usar a ferramenta correspondente (`criar_agendamento`, `aguardar_documento_para_solicitacao`) e receber de volta o resultado da execução dessa ferramenta. Sua resposta de sucesso **DEVE** ser baseada no retorno da ferramenta. Se a ferramenta retornar um erro, você deve informar o erro ao usuário.";
     }
 
     private String findDependenteIdByName(String colaboradorId, String nomeDependente) throws JsonProcessingException {
