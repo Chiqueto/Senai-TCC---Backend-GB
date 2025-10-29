@@ -84,6 +84,12 @@
           background:#F0FDF4;
         }
 
+        .data-table th {
+            font-weight:600;
+            color:var(--brand);
+            background:#F0FDF4;
+        }
+
         /* Fonte local de assinatura */
         @font-face {
           font-family:'Dancing Script';
@@ -153,7 +159,7 @@
                     <td th:text="${colaborador.funcao.name()}">APRENDIZ EM DESENVOLVIMENTO DE SISTEMAS</td>
                 </tr>
                 <tr>
-                    <td class="label">Valor Pago:</td>
+                    <td class="label">Valor Total:</td>
                     <td th:text="'R$ ' + ${#numbers.formatDecimal(solicitacao.valorTotal, 1, 'POINT', 2, 'COMMA')}">R$ 338,00</td>
                 </tr>
                 <tr>
@@ -162,8 +168,29 @@
                 </tr>
             </table>
 
+            <div th:if="${parcelas != null and not #lists.isEmpty(parcelas)}" style="margin-top: 25px;">
+                <h3 style="color: var(--brand); margin-bottom: 8px; font-size: 11pt; border-bottom: 1px solid var(--line); padding-bottom: 6px;">
+                    Detalhamento do Desconto em Folha
+                </h3>
+                <table class="data-table" style="margin-top: 8px;">
+                    <thead>
+                    <tr>
+                        <th style="width: 20%;">Nº Parcela</th>
+                        <th style="width: 40%;">Data Vencimento</th>
+                        <th style="width: 40%; text-align: right;">Valor (R$)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="parcela : ${parcelas}">
+                        <td th:text="${parcela.numero}">1</td>
+                        <td th:text="${parcela.dataVencimento}">05/11/2025</td>
+                        <td th:text="'R$ ' + ${parcela.valor}" style="text-align: right;">R$ 600,00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
             <div style="margin-top:18px; text-align:center; font-weight:700;">
-                DECLARO TER RECEBIDO O VALOR ACIMA REFERENTE AO PAGAMENTO INFORMADO
+                FICA AUTORIZADO O DECONTO EM FOLHA
             </div>
         </main>
 

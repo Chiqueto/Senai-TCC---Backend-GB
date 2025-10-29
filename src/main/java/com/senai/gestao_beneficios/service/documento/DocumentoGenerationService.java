@@ -265,21 +265,26 @@ public class DocumentoGenerationService {
         colaboradorMock.setMatricula("41532");
         colaboradorMock.setFuncao(Funcao.OUTRO);
 
-        Beneficio beneficioMock = new Beneficio();
-        beneficioMock.setNome("Reembolso de Alimentação");
-
         Solicitacao solicitacaoMock = new Solicitacao();
         solicitacaoMock.setId("uuid-de-teste-987654321");
         solicitacaoMock.setColaborador(colaboradorMock);
-        solicitacaoMock.setBeneficio(beneficioMock);
-        solicitacaoMock.setDescricao("Pagamento referente a benefício autorizado.");
         solicitacaoMock.setValorTotal(new BigDecimal("1200.00"));
         solicitacaoMock.setDataSolicitacao(LocalDate.now().atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant());
+
+        // --- Mock das Parcelas (ESTAVA FALTANDO) ---
+        solicitacaoMock.setQtdeParcelas(2); // Defina o número de parcelas
+
+        List<ParcelaInfo> parcelasMock = new ArrayList<>();
+        // Assumindo que seu ParcelaInfo seja (numero, data, valor)
+        parcelasMock.add(new ParcelaInfo("1", "05/11/2025", "600,00"));
+        parcelasMock.add(new ParcelaInfo("2", "05/12/2025", "600,00"));
 
         // --- Contexto Thymeleaf ---
         Context context = new Context();
         context.setVariable("solicitacao", solicitacaoMock);
         context.setVariable("colaborador", colaboradorMock);
+        context.setVariable("parcelas", parcelasMock); // Adiciona a lista ao contexto
+        context.setVariable("incluirAssinatura", true); // Para mostrar a assinatura no teste
 
         // --- Geração do PDF ---
         return gerarPdfBytes("recibo.html", context);
