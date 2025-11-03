@@ -446,7 +446,7 @@ public class ChatService {
                 "3.  Após o usuário escolher um benefício, colete as informações necessárias **uma por uma**:\n" +
                 "    - \"Qual o valor total que você precisa?\"\n" +
                 "    - \"Qual será a forma de pagamento?\"\n" +
-                "    - Se a forma for `DESCONTADO_EM_FOLHA`, pergunte: \"Em quantas parcelas?\ caso contrário, sempre será 1 parcela"\n" +
+                "    - Se a forma for `DESCONTADO_EM_FOLHA`, pergunte: \"Em quantas parcelas?\ caso contrário, sempre será 1 parcela \n" +
                 "    - \"O benefício é para um dependente?\" Se sim, pergunte o nome.\n" +
                 "    - \"Gere uma observação genérica\"\n" +
                 "4.  Quando tiver coletado **todos** os dados, **NÃO confirme o sucesso**. Em vez disso, chame a ferramenta `aguardar_documento_para_solicitacao`, preenchendo todos os argumentos com os dados que você coletou.\n" + // (Vírgula extra removida daqui)
