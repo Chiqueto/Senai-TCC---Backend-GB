@@ -66,7 +66,7 @@ public class TestUserSeed {
 ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwordEncoder) {
     return args -> {
         // Defina a matrícula para o novo usuário de teste
-        final String novaMatricula = "123";
+        final String novaMatricula = "123456";
 
         // 1. Verifica se o colaborador já existe
         Optional<Colaborador> colaboradorExistente = repo.findByMatricula(novaMatricula);
@@ -81,8 +81,8 @@ ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwo
 
             // 3. Preenche os dados do novo colaborador
             novoColaborador.setMatricula(novaMatricula);
-            novoColaborador.setNome("Maria");
-            novoColaborador.setMatricula("123");
+            novoColaborador.setNome("Duda");
+            novoColaborador.setMatricula("123456");
             String senhaPlana = "123";
             String senhaCriptografada = passwordEncoder.encode(senhaPlana);
             novoColaborador.setSenha(senhaCriptografada); // ✨ Lembre-se de criptografar a senha em um ambiente real!

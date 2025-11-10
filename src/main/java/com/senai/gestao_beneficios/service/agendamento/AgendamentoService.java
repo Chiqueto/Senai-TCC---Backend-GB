@@ -198,6 +198,14 @@ public class AgendamentoService {
     public ApiResponse<AgendamentoResponseDTO> changeAgendamentoStatus(AgendamentoStatusChangeDTO agendamentoStatusChangeDTO, String idAgendamento){
         Agendamento agendamento = agendamentoRepository.findById(idAgendamento).orElseThrow(() -> new NotFoundException("agendamento", "Agendamento não encontrado"));
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        Colaborador colaborador =  (Colaborador) authentication.getPrincipal();
+
+        if (!agendamento.getColaborador().getMatricula().equals(colaborador.getMatricula()) && colaborador.getFuncao() != Funcao.GESTAO_BENEFICIOS){
+            throw new ForbiddenException("Você não tem permissão para alterar agendamento dos outros!");
+        }
+
         agendamento.setStatus(agendamentoStatusChangeDTO.status());
 
         Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);

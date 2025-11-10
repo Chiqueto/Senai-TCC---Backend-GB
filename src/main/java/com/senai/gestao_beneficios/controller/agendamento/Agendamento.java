@@ -175,7 +175,6 @@ public class Agendamento {
     }
 
     @PatchMapping("/{idAgendamento}/status")
-    @PreAuthorize("hasAuthority('ROLE_GESTAO_BENEFICIOS')")
     @Operation(
             summary = "Alteração de status",
             description = "Altera o status de um agendamento."
