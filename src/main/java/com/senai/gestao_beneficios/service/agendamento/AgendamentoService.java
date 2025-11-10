@@ -206,6 +206,18 @@ public class AgendamentoService {
             throw new ForbiddenException("Você não tem permissão para alterar agendamento dos outros!");
         }
 
+        if (!agendamentoStatusChangeDTO.status().equals(StatusAgendamento.FALTOU) || !agendamentoStatusChangeDTO.equals(StatusAgendamento.AGENDADO)) {
+
+            Instant agora = Instant.now();
+            Instant horarioAgendamento = agendamento.getHorario();
+
+            Instant limiteParaAlteracao = agora.plus(Duration.ofHours(24));
+
+            if (horarioAgendamento.isBefore(limiteParaAlteracao)) {
+                throw new ForbiddenException("Agendamentos só podem ser alterados ou cancelados com no mínimo 24 horas de antecedência.");
+            }
+        }
+
         agendamento.setStatus(agendamentoStatusChangeDTO.status());
 
         Agendamento agendamentoAtualizado = agendamentoRepository.save(agendamento);
