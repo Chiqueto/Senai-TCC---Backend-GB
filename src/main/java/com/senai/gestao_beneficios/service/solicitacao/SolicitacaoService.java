@@ -84,7 +84,7 @@ public class SolicitacaoService {
         solicitacao.setDescricao(solicitacao.descricao);
         solicitacao.setDataSolicitacao(Instant.now());
         solicitacao.setDependente(dependente);
-        solicitacao.setDesconto(request.valorTotal().subtract(request.valorTotal().multiply(new BigDecimal(beneficio.getPercentualDesconto()))).divide(new BigDecimal(100), 2, RoundingMode.HALF_UP));
+        solicitacao.setDesconto(request.valorTotal().multiply(new BigDecimal(beneficio.getPercentualDesconto())).divide(new BigDecimal(100), 2, RoundingMode.HALF_UP));
         solicitacao.setDescricao(request.descricao());
         solicitacao.setTipoPagamento(request.tipoPagamento());
         solicitacao.setQtdeParcelas(request.qtdeParcelas());
