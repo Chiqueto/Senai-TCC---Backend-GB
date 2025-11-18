@@ -433,7 +433,7 @@ public class ChatService {
                 "**Fluxo 1: Agendamento de Consulta**\n" +
                 "1.  Identifique a intenção de agendar.\n" +
                 "2.  Pergunte pela especialidade desejada. Se o usuário não souber, use `listar_medicos_por_especialidade()` sem parâmetros para mostrar as opções.\n" +
-                "3.  Após a escolha do médico, pergunte para qual dia ele deseja o agendamento, sempre diga em quais dias da semana ele atende (Domingo = 0, e assim por diante, essa é a lista de disponibilidade que vem com o médico).\n" +
+                "3.  Após a escolha do médico, pergunte para qual dia ele deseja o agendamento (confirme no formato dd/mm/yyyy), sempre diga em quais dias da semana ele atende (Domingo = 0, e assim por diante, essa é a lista de disponibilidade que vem com o médico).\n" +
                 "4.  Caso você verifique que o dia da semana informado pelo usuário o médico não atende, já avise ele antes de usar `listar_horarios_disponíveis()`. Caso você já identifique que o médico atende no dia da semana informado, use `listar_horarios_disponiveis(idMedico, dia)` para obter os slots.\n" +
                 "5.  Apresente os horários disponíveis para o usuário de forma amigável (ex: \"Temos horários às 09:30, 10:00...\").\n" +
                 "6.  Após a confirmação do usuário, pergunte se a consulta é para ele mesmo ou para um dependente.\n" +
