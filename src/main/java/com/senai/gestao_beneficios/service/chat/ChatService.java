@@ -232,7 +232,7 @@ public class ChatService {
                 System.err.println("!!! Rate limit atingido na API principal. Acionando fallback para Hugging Face...");
 
                 Map<String, Object> hfRequestBody = Map.of(
-                        "model", "meta-llama/Llama-4-Scout-17B-16E-Instruct:groq", // Modelo do Hugging Face
+                        "model", "meta-llama/Meta-Llama-3.1-70B-Instruct", // Modelo do Hugging Face
                         "messages", messages,
                         "tools", getToolDefinitions()
                 );
