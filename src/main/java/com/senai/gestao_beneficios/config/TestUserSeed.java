@@ -19,15 +19,15 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
+/*
 @Configuration
 public class TestUserSeed {
-    /*
+/*
     @Bean
     @Transactional // ✨ ADICIONE OU VERIFIQUE ESTA ANOTAÇÃO
     ApplicationRunner seedUser(ColaboradorRepository repo) { // Removi o PasswordEncoder, pois não é mais usado aqui
         return args -> {
-            final String matricula = "123";
+            final String matricula = "41532";
 
             Optional<Colaborador> colaboradorOpt = repo.findByMatricula(matricula);
 
@@ -42,11 +42,11 @@ public class TestUserSeed {
             System.out.println("[SEED] Adicionando dependentes ao usuário existente: " + matricula);
 
             Dependente dep1 = new Dependente();
-            dep1.setNome("Filho(a) de Teste");
+            dep1.setNome("Juquinha");
             dep1.setColaborador(colaborador);
 
             Dependente dep2 = new Dependente();
-            dep2.setNome("Cônjuge de Teste");
+            dep2.setNome("Marina");
             dep2.setColaborador(colaborador);
 
             Set<Dependente> dependentes = new HashSet<>();
@@ -66,7 +66,7 @@ public class TestUserSeed {
 ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwordEncoder) {
     return args -> {
         // Defina a matrícula para o novo usuário de teste
-        final String novaMatricula = "123456";
+        final String novaMatricula = "41534";
 
         // 1. Verifica se o colaborador já existe
         Optional<Colaborador> colaboradorExistente = repo.findByMatricula(novaMatricula);
@@ -81,15 +81,15 @@ ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwo
 
             // 3. Preenche os dados do novo colaborador
             novoColaborador.setMatricula(novaMatricula);
-            novoColaborador.setNome("Duda");
-            novoColaborador.setMatricula("123456");
-            String senhaPlana = "123";
+            novoColaborador.setNome("Luís Felipe");
+            novoColaborador.setMatricula("41534");
+            String senhaPlana = "123456";
             String senhaCriptografada = passwordEncoder.encode(senhaPlana);
             novoColaborador.setSenha(senhaCriptografada); // ✨ Lembre-se de criptografar a senha em um ambiente real!
-            novoColaborador.setDtNascimento(LocalDate.of(2004, 7, 12));
+            novoColaborador.setDtNascimento(LocalDate.of(2005, 3, 8));
             novoColaborador.setCidade("São Joaquim da Barra");
-            novoColaborador.setFuncao(Funcao.OUTRO);
-            novoColaborador.setGenero(Genero.FEMININO);
+            novoColaborador.setFuncao(Funcao.GESTAO_BENEFICIOS);
+            novoColaborador.setGenero(Genero.MASCULINO);
             novoColaborador.setCreated_at(Instant.now());
             novoColaborador.setUpdated_at(Instant.now());
 
@@ -100,5 +100,6 @@ ApplicationRunner seedNewUser(ColaboradorRepository repo, PasswordEncoder passwo
         }
     };
 }
-*/
+/*
 }
+ */
