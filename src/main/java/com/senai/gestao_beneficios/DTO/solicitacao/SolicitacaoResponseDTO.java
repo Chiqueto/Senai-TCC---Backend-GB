@@ -28,6 +28,7 @@ public record SolicitacaoResponseDTO (
         Integer qtdeParcelas,
         Instant dataSolicitacao,
         TipoPagamento tipoPagamento,
-        StatusSolicitacao status
+        StatusSolicitacao status,
+        String justificativa
 ) {
 }

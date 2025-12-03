@@ -47,7 +47,8 @@ public class SolicitacaoMapper {
                 solicitacao.getQtdeParcelas(),
                 solicitacao.getDataSolicitacao(),
                 solicitacao.getTipoPagamento(),
-                solicitacao.getStatus()
+                solicitacao.getStatus(),
+                solicitacao.getJustificativa()
         );
     }
 

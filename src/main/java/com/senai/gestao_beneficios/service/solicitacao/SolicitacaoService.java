@@ -105,6 +105,7 @@ public class SolicitacaoService {
                 () -> new NotFoundException("solicitacao", "Solicitação não encontrada"));
 
         solicitacao.setStatus(dto.status());
+        solicitacao.setJustificativa(dto.justificativa());
 
         Solicitacao statusChangedSolicitacao = repository.save(solicitacao);
 

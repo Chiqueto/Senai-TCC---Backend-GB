@@ -5,7 +5,8 @@ import jakarta.validation.constraints.*;
 
 public record SolicitacaoStatusChangeDTO(
         @NotNull(message = "Novo status deve ser informado")
-        StatusSolicitacao status
+        StatusSolicitacao status,
+        String justificativa
 )
 {
 }
