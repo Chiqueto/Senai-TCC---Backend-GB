@@ -206,7 +206,7 @@ public class AgendamentoService {
             throw new ForbiddenException("Você não tem permissão para alterar agendamento dos outros!");
         }
 
-        if (!agendamentoStatusChangeDTO.status().equals(StatusAgendamento.FALTOU) || !agendamentoStatusChangeDTO.equals(StatusAgendamento.AGENDADO)) {
+        if (!agendamentoStatusChangeDTO.status().equals(StatusAgendamento.FALTOU) && !agendamentoStatusChangeDTO.equals(StatusAgendamento.AGENDADO)) {
 
             Instant agora = Instant.now();
             Instant horarioAgendamento = agendamento.getHorario();
